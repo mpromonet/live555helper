@@ -11,8 +11,6 @@
 
 #pragma once
 
-#include "logger.h"
-
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
 
@@ -93,7 +91,7 @@ class RTSPConnection : public RTSPClient
 		};
 	
 	public:
-		RTSPConnection(UsageEnvironment& env, Callback* callback, const std::string & rtspURL, int verbosityLevel = 255);
+		RTSPConnection(UsageEnvironment& env, Callback* callback, const char* rtspURL, int verbosityLevel = 255);
 		virtual ~RTSPConnection();
 
 	protected:

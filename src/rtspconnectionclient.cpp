@@ -86,8 +86,8 @@ Boolean RTSPConnection::SessionSink::continuePlaying()
 
 
 		
-RTSPConnection::RTSPConnection(UsageEnvironment& env, Callback* callback, const std::string & rtspURL, int verbosityLevel) 
-				: RTSPClient(env, rtspURL.c_str(), verbosityLevel, NULL, 0
+RTSPConnection::RTSPConnection(UsageEnvironment& env, Callback* callback, const char* rtspURL, int verbosityLevel) 
+				: RTSPClient(env, rtspURL, verbosityLevel, NULL, 0
 #if LIVEMEDIA_LIBRARY_VERSION_INT > 1371168000 
 					,-1
 #endif
