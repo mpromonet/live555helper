@@ -12,31 +12,12 @@
 #pragma once
 
 #include "liveMedia.hh"
-#include "BasicUsageEnvironment.hh"
 
 
 #define RTSP_CALLBACK(uri, resultCode, resultString) \
 static void continueAfter ## uri(RTSPClient* rtspClient, int resultCode, char* resultString) { static_cast<RTSPConnection*>(rtspClient)->continueAfter ## uri(resultCode, resultString); } \
 void continueAfter ## uri (int resultCode, char* resultString); \
 /**/
-
-class Environment : public BasicUsageEnvironment
-{
-	public:
-		Environment();
-		~Environment();
-	
-	
-		void mainloop()
-		{
-			this->taskScheduler().doEventLoop(&m_stop);
-		}
-				
-		void stop() { m_stop = 1; };	
-		
-	protected:
-		char                     m_stop;		
-};
 
 
 /* ---------------------------------------------------------------------------
