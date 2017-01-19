@@ -63,7 +63,7 @@ void RTSPConnection::SessionSink::afterGettingFrame(unsigned frameSize, unsigned
 	}
 	else if (m_callback)
 	{
-		if (!m_callback->onData(m_buffer, frameSize+m_markerSize))
+		if (!m_callback->onData(this->name(), m_buffer, frameSize+m_markerSize))
 		{
 			LOG(WARN) << "NOTIFY failed";
 		}
@@ -168,7 +168,7 @@ void RTSPConnection::continueAfterSETUP(int resultCode, char* resultString)
 		{
 			LOG(WARN) << "Failed to create a data sink for " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession: " << envir().getResultMsg() << "\n";
 		}
-		else if (m_callback->onNewSession(m_subSession->mediumName(), m_subSession->codecName()))
+		else if (m_callback->onNewSession(m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines()))
 		{
 			LOG(WARN) << "Created a data sink for the \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession";
 			m_subSession->sink->startPlaying(*(m_subSession->readSource()), NULL, NULL);
