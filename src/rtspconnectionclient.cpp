@@ -14,17 +14,6 @@
 
 #include "rtspconnectionclient.h"
 
-Environment::Environment() : BasicUsageEnvironment(*BasicTaskScheduler::createNew()), m_stop(0)
-{
-}
-
-Environment::~Environment()
-{
-	TaskScheduler* scheduler = &this->taskScheduler();
-	this->reclaim();
-	delete scheduler;	
-}
-
 RTSPConnection::SessionSink::SessionSink(UsageEnvironment& env, Callback* callback) 
 	: MediaSink(env)
 	, m_buffer(NULL)
