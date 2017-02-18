@@ -20,6 +20,11 @@ static void continueAfter ## uri(RTSPClient* rtspClient, int resultCode, char* r
 void continueAfter ## uri (int resultCode, char* resultString); \
 /**/
 
+#define TASK_CALLBACK(task) \
+static void Task ## task(void* rtspClient) { static_cast<RTSPConnection*>(rtspClient)->Task ## task(); } \
+void Task ## task (); \
+/**/
+
 
 /* ---------------------------------------------------------------------------
 **  RTSP client connection interface
@@ -83,14 +88,17 @@ class RTSPConnection : public RTSPClient
 		RTSP_CALLBACK(SETUP,resultCode,resultString);
 		RTSP_CALLBACK(PLAY,resultCode,resultString);
 	
-		static void checkConnectionTimeout(void* rtspClient) { static_cast<RTSPConnection*>(rtspClient)->checkConnectionTimeout(); };
-		void checkConnectionTimeout();
+		TASK_CALLBACK(ConnectionTimeout);
+		TASK_CALLBACK(DataArrivalTimeout);
 		
 	protected:
+		int                      m_timeout;
 		MediaSession*            m_session;                   
 		MediaSubsession*         m_subSession;             
 		MediaSubsessionIterator* m_subSessionIter;
 		Callback*                m_callback; 	
 		Environment&             m_env;
 		TaskToken 		 m_connectionTask;
+		TaskToken 		 m_dataTask;
+		unsigned int             m_nbPacket;
 };

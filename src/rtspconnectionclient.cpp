@@ -81,12 +81,15 @@ RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char*
 					,-1
 #endif
 					)
+				, m_timeout(timeout)
 				, m_session(NULL)
 				, m_subSessionIter(NULL)
 				, m_callback(callback)
 				, m_env(env)
 {
-	m_connectionTask = env.taskScheduler().scheduleDelayedTask(timeout*1000000, checkConnectionTimeout, this);
+	// start tasks
+	m_connectionTask = env.taskScheduler().scheduleDelayedTask(timeout*1000000, TaskConnectionTimeout, this);
+	m_dataTask       = env.taskScheduler().scheduleDelayedTask(timeout*1000000, TaskDataArrivalTimeout, this);
 	
 	// initiate connection process
 	this->sendNextCommand();
@@ -187,9 +190,31 @@ void RTSPConnection::continueAfterPLAY(int resultCode, char* resultString)
 	delete[] resultString;
 }
 
-void RTSPConnection::checkConnectionTimeout()
+void RTSPConnection::TaskConnectionTimeout()
 {
 	std::cout << "timeout" << std::endl;
 	m_env.stop();
 }
 		
+void RTSPConnection::TaskDataArrivalTimeout()
+{
+	unsigned int newTotNumPacketsReceived = 0;
+
+	MediaSubsessionIterator iter(*m_session);
+	MediaSubsession* subsession;
+	while ((subsession = iter.next()) != NULL) {
+		RTPSource* src = subsession->rtpSource();
+		if (src != NULL) 
+		{
+			newTotNumPacketsReceived += src->receptionStatsDB().totNumPacketsReceived();
+		}
+	}
+
+	if (newTotNumPacketsReceived == m_nbPacket) {
+		std::cout << "no more data" << std::endl;
+		m_env.stop();	  
+	} else {
+		m_nbPacket = newTotNumPacketsReceived;
+		m_dataTask       = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
+	}	
+}
