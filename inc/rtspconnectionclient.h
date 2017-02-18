@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "environment.h"
 #include "liveMedia.hh"
 
 
@@ -72,7 +73,7 @@ class RTSPConnection : public RTSPClient
 		};
 	
 	public:
-		RTSPConnection(UsageEnvironment& env, Callback* callback, const char* rtspURL, int verbosityLevel = 255);
+		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int verbosityLevel = 255);
 		virtual ~RTSPConnection();
 
 	protected:
@@ -81,10 +82,15 @@ class RTSPConnection : public RTSPClient
 		RTSP_CALLBACK(DESCRIBE,resultCode,resultString);
 		RTSP_CALLBACK(SETUP,resultCode,resultString);
 		RTSP_CALLBACK(PLAY,resultCode,resultString);
+	
+		static void checkConnectionTimeout(void* rtspClient) { static_cast<RTSPConnection*>(rtspClient)->checkConnectionTimeout(); };
+		void checkConnectionTimeout();
 		
 	protected:
 		MediaSession*            m_session;                   
 		MediaSubsession*         m_subSession;             
 		MediaSubsessionIterator* m_subSessionIter;
 		Callback*                m_callback; 	
+		Environment&             m_env;
+		TaskToken 		 m_connectionTask;
 };

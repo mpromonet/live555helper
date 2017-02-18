@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 		initLogger(255);
 		Environment env;
 		MyCallback cb;
-		RTSPConnection rtspClient(env, &cb, argv[1],255);
+		RTSPConnection rtspClient(env, &cb, argv[1]);
 		std::cout << "Start mainloop" << std::endl;
 		env.mainloop();	
 	}

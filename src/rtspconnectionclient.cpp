@@ -75,7 +75,7 @@ Boolean RTSPConnection::SessionSink::continuePlaying()
 
 
 		
-RTSPConnection::RTSPConnection(UsageEnvironment& env, Callback* callback, const char* rtspURL, int verbosityLevel) 
+RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout, int verbosityLevel) 
 				: RTSPClient(env, rtspURL, verbosityLevel, NULL, 0
 #if LIVEMEDIA_LIBRARY_VERSION_INT > 1371168000 
 					,-1
@@ -84,7 +84,10 @@ RTSPConnection::RTSPConnection(UsageEnvironment& env, Callback* callback, const 
 				, m_session(NULL)
 				, m_subSessionIter(NULL)
 				, m_callback(callback)
+				, m_env(env)
 {
+	m_connectionTask = env.taskScheduler().scheduleDelayedTask(timeout*1000000, checkConnectionTimeout, this);
+	
 	// initiate connection process
 	this->sendNextCommand();
 }
@@ -133,6 +136,7 @@ void RTSPConnection::continueAfterDESCRIBE(int resultCode, char* resultString)
 	if (resultCode != 0) 
 	{
 		LOG(WARN) << "Failed to DESCRIBE: " << resultString;
+		m_env.stop();
 	}
 	else
 	{
@@ -149,6 +153,7 @@ void RTSPConnection::continueAfterSETUP(int resultCode, char* resultString)
 	if (resultCode != 0) 
 	{
 		LOG(WARN) << "Failed to SETUP: " << resultString;
+		m_env.stop();
 	}
 	else
 	{				
@@ -172,11 +177,19 @@ void RTSPConnection::continueAfterPLAY(int resultCode, char* resultString)
 	if (resultCode != 0) 
 	{
 		LOG(WARN) << "Failed to PLAY: " << resultString;
+		m_env.stop();
 	}
 	else
 	{
 		LOG(NOTICE) << "PLAY OK";
+		envir().taskScheduler().unscheduleDelayedTask(m_connectionTask);
 	}
 	delete[] resultString;
+}
+
+void RTSPConnection::checkConnectionTimeout()
+{
+	std::cout << "timeout" << std::endl;
+	m_env.stop();
 }
 		
