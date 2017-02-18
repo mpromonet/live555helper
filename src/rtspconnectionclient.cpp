@@ -157,7 +157,7 @@ void RTSPConnection::continueAfterSETUP(int resultCode, char* resultString)
 		{
 			LOG(WARN) << "Failed to create a data sink for " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession: " << envir().getResultMsg() << "\n";
 		}
-		else if (m_callback->onNewSession(m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines()))
+		else if (m_callback->onNewSession(m_subSession->sink->name(), m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines()))
 		{
 			LOG(WARN) << "Created a data sink for the \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession";
 			m_subSession->sink->startPlaying(*(m_subSession->readSource()), NULL, NULL);
