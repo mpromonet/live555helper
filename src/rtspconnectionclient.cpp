@@ -86,6 +86,7 @@ RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char*
 				, m_subSessionIter(NULL)
 				, m_callback(callback)
 				, m_env(env)
+				, m_nbPacket(0)
 {
 	// start tasks
 	m_connectionTask = env.taskScheduler().scheduleDelayedTask(timeout*1000000, TaskConnectionTimeout, this);
