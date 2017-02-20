@@ -1,3 +1,13 @@
+/* ---------------------------------------------------------------------------
+** This software is in the public domain, furnished "as is", without technical
+** support, and with no warranty, express or implied, as to its usefulness for
+** any purpose.
+**
+** testRtspClient.cpp
+** 
+** Simple Test Using live555helper
+** -------------------------------------------------------------------------*/
+
 #include <iostream>
 #include "logger.h"
 #include "environment.h"
