@@ -39,8 +39,11 @@ class RTSPConnection : public RTSPClient
 		{
 			public:
 				virtual bool    onNewSession(const char* id, const char* media, const char* codec, const char* sdp) = 0;
-				virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size) = 0;
+				virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) = 0;
 				virtual ssize_t onNewBuffer(unsigned char* , ssize_t ) { return 0; };
+				virtual void    onError(const char* ) {};
+				virtual void    onConnectionTimeout() {};
+				virtual void    onDataTimeout()       {};
 		};
 
 	protected:

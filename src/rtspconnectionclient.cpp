@@ -52,7 +52,7 @@ void RTSPConnection::SessionSink::afterGettingFrame(unsigned frameSize, unsigned
 	}
 	else if (m_callback)
 	{
-		if (!m_callback->onData(this->name(), m_buffer, frameSize+m_markerSize))
+		if (!m_callback->onData(this->name(), m_buffer, frameSize+m_markerSize, presentationTime))
 		{
 			LOG(WARN) << "NOTIFY failed";
 		}
@@ -140,7 +140,7 @@ void RTSPConnection::continueAfterDESCRIBE(int resultCode, char* resultString)
 	if (resultCode != 0) 
 	{
 		LOG(WARN) << "Failed to DESCRIBE: " << resultString;
-		m_env.stop();
+		m_callback->onError(resultString);
 	}
 	else
 	{
@@ -157,7 +157,7 @@ void RTSPConnection::continueAfterSETUP(int resultCode, char* resultString)
 	if (resultCode != 0) 
 	{
 		LOG(WARN) << "Failed to SETUP: " << resultString;
-		m_env.stop();
+		m_callback->onError(resultString);
 	}
 	else
 	{				
@@ -181,7 +181,7 @@ void RTSPConnection::continueAfterPLAY(int resultCode, char* resultString)
 	if (resultCode != 0) 
 	{
 		LOG(WARN) << "Failed to PLAY: " << resultString;
-		m_env.stop();
+		m_callback->onError(resultString);
 	}
 	else
 	{
@@ -193,8 +193,7 @@ void RTSPConnection::continueAfterPLAY(int resultCode, char* resultString)
 
 void RTSPConnection::TaskConnectionTimeout()
 {
-	std::cout << "timeout" << std::endl;
-	m_env.stop();
+	m_callback->onConnectionTimeout();
 }
 		
 void RTSPConnection::TaskDataArrivalTimeout()
@@ -212,10 +211,9 @@ void RTSPConnection::TaskDataArrivalTimeout()
 	}
 
 	if (newTotNumPacketsReceived == m_nbPacket) {
-		std::cout << "no more data" << std::endl;
-		m_env.stop();	  
+		m_callback->onDataTimeout();
 	} else {
 		m_nbPacket = newTotNumPacketsReceived;
-		m_dataTask       = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
+		m_dataTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
 	}	
 }
