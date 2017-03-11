@@ -19,12 +19,8 @@ class Environment : public BasicUsageEnvironment
 		virtual ~Environment();
 	
 	
-		void mainloop()
-		{
-			this->taskScheduler().doEventLoop(&m_stop);
-		}
-				
-		void stop() { m_stop = 1; };	
+		void mainloop();
+		void stop();	
 		
 	protected:
 		char                     m_stop;		

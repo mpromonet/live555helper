@@ -23,3 +23,12 @@ Environment::~Environment()
 	delete scheduler;	
 }
 
+void Environment::mainloop()
+{
+	this->taskScheduler().doEventLoop(&m_stop);	
+}
+
+void Environment::stop()
+{
+	m_stop = 1;	
+}
