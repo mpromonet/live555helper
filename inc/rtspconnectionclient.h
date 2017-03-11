@@ -42,8 +42,8 @@ class RTSPConnection : public RTSPClient
 				virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) = 0;
 				virtual ssize_t onNewBuffer(unsigned char* , ssize_t ) { return 0; };
 				virtual void    onError(const char* ) {};
-				virtual void    onConnectionTimeout() {};
-				virtual void    onDataTimeout()       {};
+				virtual void    onConnectionTimeout(RTSPConnection&) {};
+				virtual void    onDataTimeout(RTSPConnection&)       {};
 		};
 
 	protected:
@@ -84,6 +84,8 @@ class RTSPConnection : public RTSPClient
 		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int verbosityLevel = 255);
 		virtual ~RTSPConnection();
 
+		void start();
+	
 	protected:
 		void sendNextCommand(); 
 				

@@ -86,14 +86,11 @@ RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char*
 				, m_subSessionIter(NULL)
 				, m_callback(callback)
 				, m_env(env)
+				, m_connectionTask(NULL)
+				, m_dataTask(NULL)
 				, m_nbPacket(0)
 {
-	// start tasks
-	m_connectionTask = env.taskScheduler().scheduleDelayedTask(timeout*1000000, TaskConnectionTimeout, this);
-	m_dataTask       = env.taskScheduler().scheduleDelayedTask(timeout*1000000, TaskDataArrivalTimeout, this);
-	
-	// initiate connection process
-	this->sendNextCommand();
+	this->start();
 }
 
 RTSPConnection::~RTSPConnection()
@@ -102,6 +99,34 @@ RTSPConnection::~RTSPConnection()
 	Medium::close(m_session);
 }
 		
+void RTSPConnection::start()
+{
+	if (m_subSessionIter)
+	{
+		delete m_subSessionIter;
+		m_subSessionIter = NULL;
+	}
+	if (m_session)
+	{
+		Medium::close(m_session);
+		m_session = NULL;
+	}
+	if (m_connectionTask)
+	{
+		envir().taskScheduler().unscheduleDelayedTask(m_connectionTask);
+	}
+	if (m_dataTask)
+	{
+		envir().taskScheduler().unscheduleDelayedTask(m_dataTask);
+	}
+		
+	// start tasks
+	m_connectionTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskConnectionTimeout, this);
+	
+	// initiate connection process
+	this->sendNextCommand();
+}
+
 void RTSPConnection::sendNextCommand() 
 {
 	if (m_subSessionIter == NULL)
@@ -186,14 +211,17 @@ void RTSPConnection::continueAfterPLAY(int resultCode, char* resultString)
 	else
 	{
 		LOG(NOTICE) << "PLAY OK";
-		envir().taskScheduler().unscheduleDelayedTask(m_connectionTask);
+		m_dataTask       = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
+
 	}
+	envir().taskScheduler().unscheduleDelayedTask(m_connectionTask);
+	m_connectionTask = NULL;
 	delete[] resultString;
 }
 
 void RTSPConnection::TaskConnectionTimeout()
 {
-	m_callback->onConnectionTimeout();
+	m_callback->onConnectionTimeout(*this);
 }
 		
 void RTSPConnection::TaskDataArrivalTimeout()
@@ -202,7 +230,8 @@ void RTSPConnection::TaskDataArrivalTimeout()
 
 	MediaSubsessionIterator iter(*m_session);
 	MediaSubsession* subsession;
-	while ((subsession = iter.next()) != NULL) {
+	while ((subsession = iter.next()) != NULL) 
+	{
 		RTPSource* src = subsession->rtpSource();
 		if (src != NULL) 
 		{
@@ -210,9 +239,12 @@ void RTSPConnection::TaskDataArrivalTimeout()
 		}
 	}
 
-	if (newTotNumPacketsReceived == m_nbPacket) {
-		m_callback->onDataTimeout();
-	} else {
+	if (newTotNumPacketsReceived == m_nbPacket) 
+	{
+		m_callback->onDataTimeout(*this);
+	} 
+	else 
+	{
 		m_nbPacket = newTotNumPacketsReceived;
 		m_dataTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
 	}	

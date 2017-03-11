@@ -36,13 +36,13 @@ class MyCallback : public RTSPConnection::Callback
 			std::cout << "Error:" << message << std::endl;
 			m_env.stop();
 		}
-		virtual void    onConnectionTimeout() {
+		virtual void    onConnectionTimeout(RTSPConnection& connection) {
 			std::cout << "Connection timeout" << std::endl;
-			m_env.stop();
+			connection.start();
 		}
-		virtual void    onDataTimeout()       {
+		virtual void    onDataTimeout(RTSPConnection& connection)       {
 			std::cout << "Data timeout" << std::endl;
-			m_env.stop();
+			connection.start();
 		}		
 };
 
