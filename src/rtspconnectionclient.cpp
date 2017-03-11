@@ -74,52 +74,44 @@ Boolean RTSPConnection::SessionSink::continuePlaying()
 }
 
 
-		
 RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout, int verbosityLevel) 
-				: RTSPClient(env, rtspURL, verbosityLevel, NULL, 0
-#if LIVEMEDIA_LIBRARY_VERSION_INT > 1371168000 
-					,-1
-#endif
-					)
-				, m_timeout(timeout)
-				, m_session(NULL)
-				, m_subSessionIter(NULL)
+				: m_env(env)
 				, m_callback(callback)
-				, m_env(env)
-				, m_connectionTask(NULL)
-				, m_dataTask(NULL)
-				, m_nbPacket(0)
+				, m_url(rtspURL)
+				, m_timeout(timeout)
+				, m_verbosity(verbosityLevel)
+				, m_rtspClient(NULL)
 {
 	this->start();
 }
 
-RTSPConnection::~RTSPConnection()
-{
-	delete m_subSessionIter;
-	Medium::close(m_session);
-}
-		
 void RTSPConnection::start()
 {
-	if (m_subSessionIter)
+	if (m_rtspClient)
 	{
-		delete m_subSessionIter;
-		m_subSessionIter = NULL;
+		Medium::close(m_rtspClient);
 	}
-	if (m_session)
-	{
-		Medium::close(m_session);
-		m_session = NULL;
-	}
-	if (m_connectionTask)
-	{
-		envir().taskScheduler().unscheduleDelayedTask(m_connectionTask);
-	}
-	if (m_dataTask)
-	{
-		envir().taskScheduler().unscheduleDelayedTask(m_dataTask);
-	}
+	
+	m_rtspClient = new RTSPClientConnection(*this, m_env, m_callback, m_url, m_timeout, m_verbosity);	
+}
+
+RTSPConnection::~RTSPConnection()
+{
+	Medium::close(m_rtspClient);
+}
+
 		
+RTSPConnection::RTSPClientConnection::RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, int verbosityLevel) 
+				: RTSPClientConstrutor(env, rtspURL, verbosityLevel, NULL, 0)
+				, m_connection(connection)
+				, m_timeout(timeout)
+				, m_session(NULL)
+				, m_subSessionIter(NULL)
+				, m_callback(callback)
+				, m_connectionTask(NULL)
+				, m_dataTask(NULL)
+				, m_nbPacket(0)
+{
 	// start tasks
 	m_connectionTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskConnectionTimeout, this);
 	
@@ -127,7 +119,13 @@ void RTSPConnection::start()
 	this->sendNextCommand();
 }
 
-void RTSPConnection::sendNextCommand() 
+RTSPConnection::RTSPClientConnection::~RTSPClientConnection()
+{
+	delete m_subSessionIter;
+	Medium::close(m_session);
+}
+		
+void RTSPConnection::RTSPClientConnection::sendNextCommand() 
 {
 	if (m_subSessionIter == NULL)
 	{
@@ -160,7 +158,7 @@ void RTSPConnection::sendNextCommand()
 	}
 }
 
-void RTSPConnection::continueAfterDESCRIBE(int resultCode, char* resultString)
+void RTSPConnection::RTSPClientConnection::continueAfterDESCRIBE(int resultCode, char* resultString)
 {
 	if (resultCode != 0) 
 	{
@@ -177,7 +175,7 @@ void RTSPConnection::continueAfterDESCRIBE(int resultCode, char* resultString)
 	delete[] resultString;
 }
 
-void RTSPConnection::continueAfterSETUP(int resultCode, char* resultString)
+void RTSPConnection::RTSPClientConnection::continueAfterSETUP(int resultCode, char* resultString)
 {
 	if (resultCode != 0) 
 	{
@@ -201,7 +199,7 @@ void RTSPConnection::continueAfterSETUP(int resultCode, char* resultString)
 	this->sendNextCommand();  
 }	
 
-void RTSPConnection::continueAfterPLAY(int resultCode, char* resultString)
+void RTSPConnection::RTSPClientConnection::continueAfterPLAY(int resultCode, char* resultString)
 {
 	if (resultCode != 0) 
 	{
@@ -219,12 +217,12 @@ void RTSPConnection::continueAfterPLAY(int resultCode, char* resultString)
 	delete[] resultString;
 }
 
-void RTSPConnection::TaskConnectionTimeout()
+void RTSPConnection::RTSPClientConnection::TaskConnectionTimeout()
 {
-	m_callback->onConnectionTimeout(*this);
+	m_callback->onConnectionTimeout(m_connection);
 }
 		
-void RTSPConnection::TaskDataArrivalTimeout()
+void RTSPConnection::RTSPClientConnection::TaskDataArrivalTimeout()
 {
 	unsigned int newTotNumPacketsReceived = 0;
 
@@ -238,10 +236,10 @@ void RTSPConnection::TaskDataArrivalTimeout()
 			newTotNumPacketsReceived += src->receptionStatsDB().totNumPacketsReceived();
 		}
 	}
-
+	
 	if (newTotNumPacketsReceived == m_nbPacket) 
 	{
-		m_callback->onDataTimeout(*this);
+		m_callback->onDataTimeout(m_connection);
 	} 
 	else 
 	{

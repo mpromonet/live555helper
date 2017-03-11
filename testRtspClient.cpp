@@ -15,12 +15,7 @@
 
 class MyCallback : public RTSPConnection::Callback
 {
-	protected:
-		Environment& m_env;
-	
 	public:
-		MyCallback(Environment& env) : m_env(env) {
-		}		
 		virtual bool    onNewSession(const char* id, const char* media, const char* codec, const char* sdp) {
 			std::cout << id << " " << media << "/" <<  codec << std::endl;
 			return true;
@@ -29,19 +24,15 @@ class MyCallback : public RTSPConnection::Callback
 			std::cout << id << " " << size << " ts:" << presentationTime.tv_sec << "." << presentationTime.tv_usec << std::endl;
 			return true;
 		}
-		virtual ssize_t onNewBuffer(unsigned char* , ssize_t ) { 
-			return 0; 
-		}
 		virtual void    onError(const char* message) {
 			std::cout << "Error:" << message << std::endl;
-			m_env.stop();
 		}
 		virtual void    onConnectionTimeout(RTSPConnection& connection) {
-			std::cout << "Connection timeout" << std::endl;
+			std::cout << "Connection timeout -> retry" << std::endl;
 			connection.start();
 		}
 		virtual void    onDataTimeout(RTSPConnection& connection)       {
-			std::cout << "Data timeout" << std::endl;
+			std::cout << "Data timeout -> retry" << std::endl;
 			connection.start();
 		}		
 };
@@ -52,7 +43,7 @@ int main(int argc, char *argv[])
 	{
 		initLogger(255);
 		Environment env;
-		MyCallback cb(env);
+		MyCallback cb;
 		RTSPConnection rtspClient(env, &cb, argv[1]);
 		std::cout << "Start mainloop" << std::endl;
 		env.mainloop();	

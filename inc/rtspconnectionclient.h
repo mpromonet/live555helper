@@ -16,20 +16,26 @@
 
 
 #define RTSP_CALLBACK(uri, resultCode, resultString) \
-static void continueAfter ## uri(RTSPClient* rtspClient, int resultCode, char* resultString) { static_cast<RTSPConnection*>(rtspClient)->continueAfter ## uri(resultCode, resultString); } \
+static void continueAfter ## uri(RTSPClient* rtspClient, int resultCode, char* resultString) { static_cast<RTSPConnection::RTSPClientConnection*>(rtspClient)->continueAfter ## uri(resultCode, resultString); } \
 void continueAfter ## uri (int resultCode, char* resultString); \
 /**/
 
 #define TASK_CALLBACK(task) \
-static void Task ## task(void* rtspClient) { static_cast<RTSPConnection*>(rtspClient)->Task ## task(); } \
+static void Task ## task(void* rtspClient) { static_cast<RTSPConnection::RTSPClientConnection*>(rtspClient)->Task ## task(); } \
 void Task ## task (); \
 /**/
 
 
+#if LIVEMEDIA_LIBRARY_VERSION_INT > 1371168000 
+	#define RTSPClientConstrutor(env, url, verbosity, appname, httpTunnelPort) RTSPClient(env, url, verbosity, appname, httpTunnelPort ,-1)
+#else					
+	#define RTSPClientConstrutor(env, url, verbosity, appname, httpTunnelPort) RTSPClient(env, url, verbosity, appname, httpTunnelPort)
+#endif
+
 /* ---------------------------------------------------------------------------
 **  RTSP client connection interface
 ** -------------------------------------------------------------------------*/
-class RTSPConnection : public RTSPClient
+class RTSPConnection 
 {
 	public:
 		/* ---------------------------------------------------------------------------
@@ -80,30 +86,50 @@ class RTSPConnection : public RTSPClient
 				ssize_t                m_markerSize;
 		};
 	
+		/* ---------------------------------------------------------------------------
+		**  RTSP client 
+		** -------------------------------------------------------------------------*/
+		class RTSPClientConnection : public RTSPClient
+		{
+			public:
+				RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int verbosityLevel = 255);
+				virtual ~RTSPClientConnection();
+			
+			protected:
+				void sendNextCommand(); 
+						
+				RTSP_CALLBACK(DESCRIBE,resultCode,resultString);
+				RTSP_CALLBACK(SETUP,resultCode,resultString);
+				RTSP_CALLBACK(PLAY,resultCode,resultString);
+			
+				TASK_CALLBACK(ConnectionTimeout);
+				TASK_CALLBACK(DataArrivalTimeout);
+				
+			protected:
+				RTSPConnection&          m_connection;
+				int                      m_timeout;
+				MediaSession*            m_session;                   
+				MediaSubsession*         m_subSession;             
+				MediaSubsessionIterator* m_subSessionIter;
+				Callback*                m_callback; 	
+				TaskToken 		 m_connectionTask;
+				TaskToken 		 m_dataTask;
+				unsigned int             m_nbPacket;
+		};
+		
 	public:
 		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int verbosityLevel = 255);
 		virtual ~RTSPConnection();
 
 		void start();
 	
-	protected:
-		void sendNextCommand(); 
-				
-		RTSP_CALLBACK(DESCRIBE,resultCode,resultString);
-		RTSP_CALLBACK(SETUP,resultCode,resultString);
-		RTSP_CALLBACK(PLAY,resultCode,resultString);
 	
-		TASK_CALLBACK(ConnectionTimeout);
-		TASK_CALLBACK(DataArrivalTimeout);
-		
 	protected:
-		int                      m_timeout;
-		MediaSession*            m_session;                   
-		MediaSubsession*         m_subSession;             
-		MediaSubsessionIterator* m_subSessionIter;
-		Callback*                m_callback; 	
 		Environment&             m_env;
-		TaskToken 		 m_connectionTask;
-		TaskToken 		 m_dataTask;
-		unsigned int             m_nbPacket;
+		Callback*                m_callback; 	
+		const char*              m_url;
+		int                      m_timeout;
+		int                      m_verbosity;
+	
+		RTSPClientConnection*    m_rtspClient;
 };
