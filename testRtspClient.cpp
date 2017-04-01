@@ -9,7 +9,6 @@
 ** -------------------------------------------------------------------------*/
 
 #include <iostream>
-#include "logger.h"
 #include "environment.h"
 #include "rtspconnectionclient.h"
 
@@ -41,10 +40,12 @@ int main(int argc, char *argv[])
 {
 	if (argc > 0) 
 	{
-		initLogger(255);
 		Environment env;
 		MyCallback cb;
-		RTSPConnection rtspClient(env, &cb, argv[1]);
+		int  timeout = 10;
+		bool rtpovertcp = true;
+		int  logLevel = 255;
+		RTSPConnection rtspClient(env, &cb, argv[1], timeout, rtpovertcp, logLevel);
 		std::cout << "Start mainloop" << std::endl;
 		env.mainloop();	
 	}

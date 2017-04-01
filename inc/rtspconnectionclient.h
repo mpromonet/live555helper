@@ -92,8 +92,8 @@ class RTSPConnection
 		class RTSPClientConnection : public RTSPClient
 		{
 			public:
-				RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int verbosityLevel = 255);
-				virtual ~RTSPClientConnection();
+				RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, bool rtpovertcp, int verbosityLevel);
+				virtual ~RTSPClientConnection(); 
 			
 			protected:
 				void sendNextCommand(); 
@@ -108,6 +108,7 @@ class RTSPConnection
 			protected:
 				RTSPConnection&          m_connection;
 				int                      m_timeout;
+				bool                     m_rtpovertcp;
 				MediaSession*            m_session;                   
 				MediaSubsession*         m_subSession;             
 				MediaSubsessionIterator* m_subSessionIter;
@@ -118,7 +119,7 @@ class RTSPConnection
 		};
 		
 	public:
-		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int verbosityLevel = 255);
+		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, bool rtpovertcp = false, int verbosityLevel = 1);
 		virtual ~RTSPConnection();
 
 		void start();
@@ -129,6 +130,7 @@ class RTSPConnection
 		Callback*                m_callback; 	
 		const char*              m_url;
 		int                      m_timeout;
+		bool                     m_rtpovertcp;
 		int                      m_verbosity;
 	
 		RTSPClientConnection*    m_rtspClient;
