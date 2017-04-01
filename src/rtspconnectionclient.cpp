@@ -10,8 +10,6 @@
 ** -------------------------------------------------------------------------*/
 
 
-#include "logger.h"
-
 #include "rtspconnectionclient.h"
 
 RTSPConnection::SessionSink::SessionSink(UsageEnvironment& env, Callback* callback) 
@@ -36,7 +34,7 @@ void RTSPConnection::SessionSink::allocate(ssize_t bufferSize)
 	if (m_callback)
 	{
 		m_markerSize = m_callback->onNewBuffer(m_buffer, m_bufferSize);
-		envir() << "markerSize:" << (int)m_markerSize;
+		envir() << "markerSize:" << (int)m_markerSize << "\n";
 	}
 }
 
@@ -53,7 +51,7 @@ void RTSPConnection::SessionSink::afterGettingFrame(unsigned frameSize, unsigned
 	{
 		if (!m_callback->onData(this->name(), m_buffer, frameSize+m_markerSize, presentationTime))
 		{
-			envir() << "NOTIFY failed";
+			envir() << "NOTIFY failed\n";
 		}
 	}
 	this->continuePlaying();
@@ -141,14 +139,14 @@ void RTSPConnection::RTSPClientConnection::sendNextCommand()
 			// still subsession to SETUP
 			if (!m_subSession->initiate()) 
 			{
-				envir() << "Failed to initiate " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession: " << envir().getResultMsg();
+				envir() << "Failed to initiate " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession: " << envir().getResultMsg() << "\n";
 				this->sendNextCommand();
 			} 
 			else 
 			{
 				if (fVerbosityLevel > 1) 
 				{				
-					envir() << "Initiated " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession";
+					envir() << "Initiated " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession" << "\n";
 				}
 			}
 
@@ -166,14 +164,14 @@ void RTSPConnection::RTSPClientConnection::continueAfterDESCRIBE(int resultCode,
 {
 	if (resultCode != 0) 
 	{
-		envir() << "Failed to DESCRIBE: " << resultString;
+		envir() << "Failed to DESCRIBE: " << resultString << "\n";
 		m_callback->onError(resultString);
 	}
 	else
 	{
 		if (fVerbosityLevel > 1) 
 		{
-			envir() << "Got SDP:\n" << resultString;
+			envir() << "Got SDP:\n" << resultString << "\n";
 		}
 		m_session = MediaSession::createNew(envir(), resultString);
 		m_subSessionIter = new MediaSubsessionIterator(*m_session);
@@ -186,7 +184,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterSETUP(int resultCode, ch
 {
 	if (resultCode != 0) 
 	{
-		envir() << "Failed to SETUP: " << resultString;
+		envir() << "Failed to SETUP: " << resultString << "\n";
 		m_callback->onError(resultString);
 	}
 	else
@@ -198,7 +196,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterSETUP(int resultCode, ch
 		}
 		else if (m_callback->onNewSession(m_subSession->sink->name(), m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines()))
 		{
-			envir() << "Created a data sink for the \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession";
+			envir() << "Created a data sink for the \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession" << "\n";
 			m_subSession->sink->startPlaying(*(m_subSession->readSource()), NULL, NULL);
 		}
 	}
@@ -210,14 +208,14 @@ void RTSPConnection::RTSPClientConnection::continueAfterPLAY(int resultCode, cha
 {
 	if (resultCode != 0) 
 	{
-		envir() << "Failed to PLAY: " << resultString;
+		envir() << "Failed to PLAY: " << resultString << "\n";
 		m_callback->onError(resultString);
 	}
 	else
 	{
 		if (fVerbosityLevel > 1) 
 		{
-			envir() << "PLAY OK";
+			envir() << "PLAY OK" << "\n";
 		}
 		m_dataTask       = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
 

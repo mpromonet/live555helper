@@ -8,8 +8,6 @@
 ** -------------------------------------------------------------------------*/
 
 
-#include "logger.h"
-
 #include "environment.h"
 
 Environment::Environment() : BasicUsageEnvironment(*BasicTaskScheduler::createNew()), m_stop(0)
