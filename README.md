@@ -21,7 +21,8 @@ For instance a dummy RTSP client could be implement with :
 				}
 		};
 
-		Environment env;
+                char stop = 0;
+		Environment env(stop);
 		MyCallback cb;
 		RTSPConnection rtspClient(env, &cb, "rtsp://pi2.local:8554/unicast");
 		env.mainloop();
