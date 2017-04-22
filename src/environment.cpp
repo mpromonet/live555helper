@@ -10,7 +10,7 @@
 #include <iostream>
 #include "environment.h"
 
-Environment::Environment() : Environment(m_stop)
+Environment::Environment() : Environment(m_stopRef)
 {
 }
 
