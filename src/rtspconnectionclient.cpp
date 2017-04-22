@@ -87,6 +87,7 @@ void RTSPConnection::start()
 {
 	if (m_rtspClient)
 	{
+		
 		Medium::close(m_rtspClient);
 	}
 	
@@ -121,6 +122,19 @@ RTSPConnection::RTSPClientConnection::RTSPClientConnection(RTSPConnection& conne
 RTSPConnection::RTSPClientConnection::~RTSPClientConnection()
 {
 	delete m_subSessionIter;
+	
+	// free subsession
+	MediaSubsessionIterator iter(*m_session);
+	MediaSubsession* subsession;
+	while ((subsession = iter.next()) != NULL) 
+	{
+		if (subsession->sink) 
+		{
+			envir() << "Close session: " << subsession->mediumName() << "/" << subsession->codecName() << "\n";
+			Medium::close(subsession->sink);
+			subsession->sink = NULL;
+		}
+	}	
 	Medium::close(m_session);
 }
 		

@@ -9,6 +9,7 @@
 ** -------------------------------------------------------------------------*/
 
 #include <iostream>
+#include <signal.h>
 #include "environment.h"
 #include "rtspconnectionclient.h"
 
@@ -36,16 +37,26 @@ class MyCallback : public RTSPConnection::Callback
 		}		
 };
 
+char stop = 0;
+void sig_handler(int signo)
+{
+	if (signo == SIGINT) {
+		printf("received SIGINT\n");
+		stop = 1;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc > 0) 
 	{
-		Environment env;
+		Environment env(stop);
 		MyCallback cb;
 		int  timeout = 10;
 		bool rtpovertcp = true;
 		int  logLevel = 255;
 		RTSPConnection rtspClient(env, &cb, argv[1], timeout, rtpovertcp, logLevel);
+		signal(SIGINT, sig_handler);
 		std::cout << "Start mainloop" << std::endl;
 		env.mainloop();	
 	}
