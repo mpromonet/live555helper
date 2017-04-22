@@ -10,6 +10,10 @@
 #include <iostream>
 #include "environment.h"
 
+Environment::Environment() : Environment(m_stop)
+{
+}
+
 Environment::Environment(char & stop) : BasicUsageEnvironment(*BasicTaskScheduler::createNew()), m_stop(stop)
 {
 	m_stop = 0;

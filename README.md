@@ -22,7 +22,7 @@ For instance a dummy RTSP client could be implement with :
 		};
 
                 char stop = 0;
-		Environment env(stop);
+		Environment env;
 		MyCallback cb;
 		RTSPConnection rtspClient(env, &cb, "rtsp://pi2.local:8554/unicast");
 		env.mainloop();

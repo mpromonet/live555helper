@@ -15,6 +15,7 @@
 class Environment : public BasicUsageEnvironment
 {
 	public:
+		Environment();
 		Environment(char& stop);
 		virtual ~Environment();
 	
@@ -24,5 +25,6 @@ class Environment : public BasicUsageEnvironment
 		
 	protected:
 		char& m_stop;		
+		char  m_stopRef;		
 };
 
