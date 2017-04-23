@@ -3,13 +3,14 @@ CFLAGS += -I inc -g
 RM = rm -rf
 CC = g++
 AR = ar
+PREFIX?=/usr
 
 # live555
-ifneq ($(wildcard $(SYSROOT)/usr/include/liveMedia/liveMedia.hh),)
-	CFLAGS += -I $(SYSROOT)/usr/include/liveMedia  -I $(SYSROOT)/usr/include/groupsock -I $(SYSROOT)/usr/include/UsageEnvironment -I $(SYSROOT)/usr/include/BasicUsageEnvironment/
-	LDFLAGS += -l:libliveMedia.a -l:libgroupsock.a -l:libUsageEnvironment.a -l:libBasicUsageEnvironment.a
+ifneq ($(wildcard $(SYSROOT)/$(PREFIX)/include/liveMedia/liveMedia.hh),)
+CFLAGS += -I $(SYSROOT)/$(PREFIX)/include/liveMedia  -I $(SYSROOT)/$(PREFIX)/include/groupsock -I $(SYSROOT)/$(PREFIX)/include/UsageEnvironment -I $(SYSROOT)/$(PREFIX)/include/BasicUsageEnvironment/
+LDFLAGS += -L $(SYSROOT)/$(PREFIX)/lib -l:libliveMedia.a -l:libgroupsock.a -l:libUsageEnvironment.a -l:libBasicUsageEnvironment.a
 else
-	$(error Cannot find live555)
+$(error Cannot find live555)
 endif
 
 LIST_CPP:=$(wildcard src/*.cpp)
