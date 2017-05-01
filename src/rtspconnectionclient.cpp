@@ -124,18 +124,21 @@ RTSPConnection::RTSPClientConnection::~RTSPClientConnection()
 	delete m_subSessionIter;
 	
 	// free subsession
-	MediaSubsessionIterator iter(*m_session);
-	MediaSubsession* subsession;
-	while ((subsession = iter.next()) != NULL) 
+	if (m_session != NULL) 
 	{
-		if (subsession->sink) 
+		MediaSubsessionIterator iter(*m_session);
+		MediaSubsession* subsession;
+		while ((subsession = iter.next()) != NULL) 
 		{
-			envir() << "Close session: " << subsession->mediumName() << "/" << subsession->codecName() << "\n";
-			Medium::close(subsession->sink);
-			subsession->sink = NULL;
-		}
-	}	
-	Medium::close(m_session);
+			if (subsession->sink) 
+			{
+				envir() << "Close session: " << subsession->mediumName() << "/" << subsession->codecName() << "\n";
+				Medium::close(subsession->sink);
+				subsession->sink = NULL;
+			}
+		}	
+		Medium::close(m_session);
+	}
 }
 		
 void RTSPConnection::RTSPClientConnection::sendNextCommand() 
