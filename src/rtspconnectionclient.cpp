@@ -91,7 +91,7 @@ void RTSPConnection::start()
 		Medium::close(m_rtspClient);
 	}
 	
-	m_rtspClient = new RTSPClientConnection(*this, m_env, m_callback, m_url, m_timeout, m_rtpovertcp, m_verbosity);	
+	m_rtspClient = new RTSPClientConnection(*this, m_env, m_callback, m_url.c_str(), m_timeout, m_rtpovertcp, m_verbosity);	
 }
 
 RTSPConnection::~RTSPConnection()

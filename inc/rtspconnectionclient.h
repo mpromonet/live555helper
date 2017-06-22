@@ -13,6 +13,7 @@
 
 #include "environment.h"
 #include "liveMedia.hh"
+#include <string>
 
 
 #define RTSP_CALLBACK(uri, resultCode, resultString) \
@@ -128,7 +129,7 @@ class RTSPConnection
 	protected:
 		Environment&             m_env;
 		Callback*                m_callback; 	
-		const char*              m_url;
+		std::string              m_url;
 		int                      m_timeout;
 		bool                     m_rtpovertcp;
 		int                      m_verbosity;
