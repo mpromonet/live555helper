@@ -29,4 +29,4 @@ testRtspClient: testRtspClient.cpp $(LIB_NAME)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 clean:
-	-@$(RM) *.a $(LIST_OBJ)
+	-@$(RM) *.a $(LIST_OBJ) testRtspClient

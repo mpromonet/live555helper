@@ -21,8 +21,9 @@ static void continueAfter ## uri(RTSPClient* rtspClient, int resultCode, char* r
 void continueAfter ## uri (int resultCode, char* resultString); \
 /**/
 
-#define TASK_CALLBACK(task) \
-static void Task ## task(void* rtspClient) { static_cast<RTSPConnection::RTSPClientConnection*>(rtspClient)->Task ## task(); } \
+#define TASK_CALLBACK(class,task) \
+TaskToken m_ ## task ## Task; \
+static void Task ## task(void* rtspClient) { static_cast<class*>(rtspClient)->Task ## task(); } \
 void Task ## task (); \
 /**/
 
@@ -47,10 +48,10 @@ class RTSPConnection
 			public:
 				virtual bool    onNewSession(const char* id, const char* media, const char* codec, const char* sdp) { return true; }
 				virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) = 0;
-				virtual ssize_t onNewBuffer(unsigned char* , ssize_t ) { return 0; }
-				virtual void    onError(const char* ) {}
-				virtual void    onConnectionTimeout(RTSPConnection&) {}
-				virtual void    onDataTimeout(RTSPConnection&)       {}
+				virtual ssize_t onNewBuffer(unsigned char*, ssize_t )  { return 0; }
+				virtual void    onError(RTSPConnection&, const char*)  {}
+				virtual void    onConnectionTimeout(RTSPConnection&)   {}
+				virtual void    onDataTimeout(RTSPConnection&)         {}
 		};
 
 	protected:
@@ -103,8 +104,8 @@ class RTSPConnection
 				RTSP_CALLBACK(SETUP,resultCode,resultString);
 				RTSP_CALLBACK(PLAY,resultCode,resultString);
 			
-				TASK_CALLBACK(ConnectionTimeout);
-				TASK_CALLBACK(DataArrivalTimeout);
+				TASK_CALLBACK(RTSPConnection::RTSPClientConnection,ConnectionTimeout);
+				TASK_CALLBACK(RTSPConnection::RTSPClientConnection,DataArrivalTimeout);
 				
 			protected:
 				RTSPConnection&          m_connection;
@@ -114,8 +115,6 @@ class RTSPConnection
 				MediaSubsession*         m_subSession;             
 				MediaSubsessionIterator* m_subSessionIter;
 				Callback*                m_callback; 	
-				TaskToken 		 m_connectionTask;
-				TaskToken 		 m_dataTask;
 				unsigned int             m_nbPacket;
 		};
 		
@@ -123,8 +122,10 @@ class RTSPConnection
 		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, bool rtpovertcp = false, int verbosityLevel = 1);
 		virtual ~RTSPConnection();
 
-		void start();
-	
+		void start(unsigned int delay = 0);
+
+	protected:
+		TASK_CALLBACK(RTSPConnection,startCallback);
 	
 	protected:
 		Environment&             m_env;

@@ -72,7 +72,8 @@ Boolean RTSPConnection::SessionSink::continuePlaying()
 
 
 RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout, bool rtpovertcp, int verbosityLevel) 
-				: m_env(env)
+				: m_startCallbackTask(NULL)
+				, m_env(env)
 				, m_callback(callback)
 				, m_url(rtspURL)
 				, m_timeout(timeout)
@@ -83,7 +84,12 @@ RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char*
 	this->start();
 }
 
-void RTSPConnection::start()
+void RTSPConnection::start(unsigned int delay)
+{
+	m_startCallbackTask = m_env.taskScheduler().scheduleDelayedTask(delay*1000000, TaskstartCallback, this);
+}	
+
+void RTSPConnection::TaskstartCallback() 
 {
 	if (m_rtspClient)
 	{
@@ -96,6 +102,7 @@ void RTSPConnection::start()
 
 RTSPConnection::~RTSPConnection()
 {
+	m_env.taskScheduler().unscheduleDelayedTask(m_startCallbackTask);
 	Medium::close(m_rtspClient);
 }
 
@@ -108,12 +115,10 @@ RTSPConnection::RTSPClientConnection::RTSPClientConnection(RTSPConnection& conne
 				, m_session(NULL)
 				, m_subSessionIter(NULL)
 				, m_callback(callback)
-				, m_connectionTask(NULL)
-				, m_dataTask(NULL)
 				, m_nbPacket(0)
 {
 	// start tasks
-	m_connectionTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskConnectionTimeout, this);
+	m_ConnectionTimeoutTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskConnectionTimeout, this);
 	
 	// initiate connection process
 	this->sendNextCommand();
@@ -121,6 +126,9 @@ RTSPConnection::RTSPClientConnection::RTSPClientConnection(RTSPConnection& conne
 
 RTSPConnection::RTSPClientConnection::~RTSPClientConnection()
 {
+	envir().taskScheduler().unscheduleDelayedTask(m_ConnectionTimeoutTask);
+	envir().taskScheduler().unscheduleDelayedTask(m_DataArrivalTimeoutTask);
+	
 	delete m_subSessionIter;
 	
 	// free subsession
@@ -182,7 +190,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterDESCRIBE(int resultCode,
 	if (resultCode != 0) 
 	{
 		envir() << "Failed to DESCRIBE: " << resultString << "\n";
-		m_callback->onError(resultString);
+		m_callback->onError(m_connection, resultString);
 	}
 	else
 	{
@@ -202,7 +210,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterSETUP(int resultCode, ch
 	if (resultCode != 0) 
 	{
 		envir() << "Failed to SETUP: " << resultString << "\n";
-		m_callback->onError(resultString);
+		m_callback->onError(m_connection, resultString);
 	}
 	else
 	{				
@@ -226,7 +234,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterPLAY(int resultCode, cha
 	if (resultCode != 0) 
 	{
 		envir() << "Failed to PLAY: " << resultString << "\n";
-		m_callback->onError(resultString);
+		m_callback->onError(m_connection, resultString);
 	}
 	else
 	{
@@ -234,11 +242,10 @@ void RTSPConnection::RTSPClientConnection::continueAfterPLAY(int resultCode, cha
 		{
 			envir() << "PLAY OK" << "\n";
 		}
-		m_dataTask       = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
+		m_DataArrivalTimeoutTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
 
 	}
-	envir().taskScheduler().unscheduleDelayedTask(m_connectionTask);
-	m_connectionTask = NULL;
+	envir().taskScheduler().unscheduleDelayedTask(m_ConnectionTimeoutTask);
 	delete[] resultString;
 }
 
@@ -269,6 +276,6 @@ void RTSPConnection::RTSPClientConnection::TaskDataArrivalTimeout()
 	else 
 	{
 		m_nbPacket = newTotNumPacketsReceived;
-		m_dataTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
+		m_DataArrivalTimeoutTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
 	}	
 }
