@@ -214,15 +214,16 @@ void RTSPConnection::RTSPClientConnection::continueAfterSETUP(int resultCode, ch
 	}
 	else
 	{				
-		m_subSession->sink = SessionSink::createNew(envir(), m_callback);
-		if (m_subSession->sink == NULL) 
-		{
-			envir() << "Failed to create a data sink for " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession: " << envir().getResultMsg() << "\n";
-		}
-		else if (m_callback->onNewSession(m_subSession->sink->name(), m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines()))
+		if (m_callback->onNewSession(m_subSession->sink->name(), m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines()))
 		{
 			envir() << "Created a data sink for the \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession" << "\n";
-			m_subSession->sink->startPlaying(*(m_subSession->readSource()), NULL, NULL);
+			m_subSession->sink = SessionSink::createNew(envir(), m_callback);
+			if (m_subSession->sink == NULL) 
+			{
+				envir() << "Failed to create a data sink for " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession: " << envir().getResultMsg() << "\n";
+			} else {
+				m_subSession->sink->startPlaying(*(m_subSession->readSource()), NULL, NULL);
+			}
 		}
 	}
 	delete[] resultString;
