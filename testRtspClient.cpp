@@ -16,21 +16,29 @@
 class MyCallback : public RTSPConnection::Callback
 {
 	public:
-		virtual bool    onNewSession(const char* id, const char* media, const char* codec, const char* sdp) {
+		MyCallback(const std::string & output)  {
+		}
+		
+		virtual bool    onNewSession(const char* id, const char* media, const char* codec, const char*) {
 			std::cout << id << " " << media << "/" <<  codec << std::endl;
 			return true;
 		}
+		
 		virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) {
 			std::cout << id << " " << size << " ts:" << presentationTime.tv_sec << "." << presentationTime.tv_usec << std::endl;
 			return true;
 		}
-		virtual void    onError(const char* message) {
+		
+		virtual void    onError(RTSPConnection& connection, const char* message) {
 			std::cout << "Error:" << message << std::endl;
+			connection.start(10);
 		}
+		
 		virtual void    onConnectionTimeout(RTSPConnection& connection) {
 			std::cout << "Connection timeout -> retry" << std::endl;
 			connection.start();
 		}
+		
 		virtual void    onDataTimeout(RTSPConnection& connection)       {
 			std::cout << "Data timeout -> retry" << std::endl;
 			connection.start();
@@ -46,23 +54,48 @@ void sig_handler(int signo)
 	}
 }
 
+void usage(const char* app) {
+		std::cout << "Usage: " << app << " url" << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
-	if (argc > 0) 
+	// default value
+	int  timeout = 10;
+	int rtptransport = RTSPConnection::RTPUDPUNICAST;
+	int  logLevel = 255;
+	std::string output;
+	
+	// decode args
+	int c = 0;
+	while ((c = getopt (argc, argv, "hv:" "t:o:" "MTH")) != -1)
+	{
+		switch (c)
+		{
+			case 'v':	logLevel   = atoi(optarg);  break;
+			case 'h':	usage(argv[0]);  return 0;
+			
+			case 't':	timeout= atoi(optarg);  break;
+			case 'o':	output = optarg;  break;
+			
+			case 'M':	rtptransport = RTSPConnection::RTPUDPMULTICAST;  break;
+			case 'T':	rtptransport = RTSPConnection::RTPOVERTCP;  break;
+			case 'H':	rtptransport = RTSPConnection::RTPOVERHTTP;  break;
+		}
+	}
+	
+	if (optind<argc)
 	{
 		Environment env(stop);
-		MyCallback cb;
-		int  timeout = 10;
-		bool rtpovertcp = true;
-		int  logLevel = 255;
-		RTSPConnection rtspClient(env, &cb, argv[1], timeout, rtpovertcp, logLevel);
+		MyCallback cb(output);
+		RTSPConnection rtspClient(env, &cb, argv[optind], timeout, rtptransport, logLevel);
 		signal(SIGINT, sig_handler);
 		std::cout << "Start mainloop" << std::endl;
 		env.mainloop();	
-	}
+	} 		
 	else
 	{
-		std::cout << "Usage: " << argv[0] << " url" << std::endl;
+		usage(argv[0]);
 	}
 	return 0;
 }

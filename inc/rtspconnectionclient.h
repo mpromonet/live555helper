@@ -40,6 +40,13 @@ void Task ## task (); \
 class RTSPConnection 
 {
 	public:
+		enum {
+			RTPUDPUNICAST,
+			RTPUDPMULTICAST,
+			RTPOVERTCP,
+			RTPOVERHTTP
+		};
+	
 		/* ---------------------------------------------------------------------------
 		**  RTSP client callback interface
 		** -------------------------------------------------------------------------*/
@@ -94,7 +101,7 @@ class RTSPConnection
 		class RTSPClientConnection : public RTSPClient
 		{
 			public:
-				RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, bool rtpovertcp, int verbosityLevel);
+				RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, int rtptransport, int verbosityLevel);
 				virtual ~RTSPClientConnection(); 
 			
 			protected:
@@ -110,7 +117,7 @@ class RTSPConnection
 			protected:
 				RTSPConnection&          m_connection;
 				int                      m_timeout;
-				bool                     m_rtpovertcp;
+				int                      m_rtptransport;
 				MediaSession*            m_session;                   
 				MediaSubsession*         m_subSession;             
 				MediaSubsessionIterator* m_subSessionIter;
@@ -119,7 +126,7 @@ class RTSPConnection
 		};
 		
 	public:
-		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, bool rtpovertcp = false, int verbosityLevel = 1);
+		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int rtptransport = RTPUDPUNICAST, int verbosityLevel = 1);
 		virtual ~RTSPConnection();
 
 		void start(unsigned int delay = 0);
@@ -132,7 +139,7 @@ class RTSPConnection
 		Callback*                m_callback; 	
 		std::string              m_url;
 		int                      m_timeout;
-		bool                     m_rtpovertcp;
+		int                      m_rtptransport;
 		int                      m_verbosity;
 	
 		RTSPClientConnection*    m_rtspClient;

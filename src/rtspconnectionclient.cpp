@@ -71,13 +71,13 @@ Boolean RTSPConnection::SessionSink::continuePlaying()
 }
 
 
-RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout, bool rtpovertcp, int verbosityLevel) 
+RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout, int rtptransport, int verbosityLevel) 
 				: m_startCallbackTask(NULL)
 				, m_env(env)
 				, m_callback(callback)
 				, m_url(rtspURL)
 				, m_timeout(timeout)
-				, m_rtpovertcp(rtpovertcp)
+				, m_rtptransport(rtptransport)
 				, m_verbosity(verbosityLevel)
 				, m_rtspClient(NULL)
 {
@@ -97,7 +97,7 @@ void RTSPConnection::TaskstartCallback()
 		Medium::close(m_rtspClient);
 	}
 	
-	m_rtspClient = new RTSPClientConnection(*this, m_env, m_callback, m_url.c_str(), m_timeout, m_rtpovertcp, m_verbosity);	
+	m_rtspClient = new RTSPClientConnection(*this, m_env, m_callback, m_url.c_str(), m_timeout, m_rtptransport, m_verbosity);	
 }
 
 RTSPConnection::~RTSPConnection()
@@ -106,12 +106,30 @@ RTSPConnection::~RTSPConnection()
 	Medium::close(m_rtspClient);
 }
 
+int getHttpTunnelPort(Environment& env, int  rtptransport, const char* rtspURL) 
+{
+	int httpTunnelPort = 0;
+	if (rtptransport == RTSPConnection::RTPOVERHTTP) 
+	{
+		char* username = NULL;
+		char* password = NULL;
+		NetAddress address;
+		portNumBits portNum;
+		if (RTSPClient::parseRTSPURL(env, rtspURL, username, password, address, portNum)) {
+			httpTunnelPort = portNum;	
+			env << "Using httpTunnelPort: " << httpTunnelPort<< "\n";			
+		}
+		delete [] username;
+		delete [] password;
+	}
+	return httpTunnelPort;
+}
 		
-RTSPConnection::RTSPClientConnection::RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, bool rtpovertcp, int verbosityLevel) 
-				: RTSPClientConstrutor(env, rtspURL, verbosityLevel, NULL, 0)
+RTSPConnection::RTSPClientConnection::RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, int  rtptransport, int verbosityLevel) 
+				: RTSPClientConstrutor(env, rtspURL, verbosityLevel, NULL, getHttpTunnelPort(env, rtptransport, rtspURL))
 				, m_connection(connection)
 				, m_timeout(timeout)
-				, m_rtpovertcp(rtpovertcp)
+				, m_rtptransport(rtptransport)
 				, m_session(NULL)
 				, m_subSessionIter(NULL)
 				, m_callback(callback)
@@ -175,7 +193,7 @@ void RTSPConnection::RTSPClientConnection::sendNextCommand()
 				}
 			}
 
-			this->sendSetupCommand(*m_subSession, continueAfterSETUP, false, m_rtpovertcp);
+			this->sendSetupCommand(*m_subSession, continueAfterSETUP, false, (m_rtptransport == RTPOVERTCP), (m_rtptransport == RTPUDPMULTICAST) );
 		}
 		else
 		{
@@ -214,16 +232,21 @@ void RTSPConnection::RTSPClientConnection::continueAfterSETUP(int resultCode, ch
 	}
 	else
 	{				
-		if (m_callback->onNewSession(m_subSession->sink->name(), m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines()))
+		MediaSink* sink = SessionSink::createNew(envir(), m_callback);
+		if (sink == NULL) 
 		{
-			envir() << "Created a data sink for the \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession" << "\n";
-			m_subSession->sink = SessionSink::createNew(envir(), m_callback);
-			if (m_subSession->sink == NULL) 
-			{
-				envir() << "Failed to create a data sink for " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession: " << envir().getResultMsg() << "\n";
-			} else {
-				m_subSession->sink->startPlaying(*(m_subSession->readSource()), NULL, NULL);
-			}
+			envir() << "Failed to create sink for \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession error: " << envir().getResultMsg() << "\n";
+			m_callback->onError(m_connection, envir().getResultMsg());			
+		} 
+		else if (m_callback->onNewSession(sink->name(), m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines())) 
+		{
+			envir() << "Start playing sink for \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession" << "\n";
+			m_subSession->sink = sink;
+			m_subSession->sink->startPlaying(*(m_subSession->readSource()), NULL, NULL);
+		} 
+		else 
+		{
+			Medium::close(sink);
 		}
 	}
 	delete[] resultString;
