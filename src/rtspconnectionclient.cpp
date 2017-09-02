@@ -19,7 +19,6 @@ RTSPConnection::SessionSink::SessionSink(UsageEnvironment& env, Callback* callba
 	, m_callback(callback) 
 	, m_markerSize(0)
 {
-	allocate(1024*1024);
 }
 
 RTSPConnection::SessionSink::~SessionSink()
@@ -59,6 +58,10 @@ void RTSPConnection::SessionSink::afterGettingFrame(unsigned frameSize, unsigned
 
 Boolean RTSPConnection::SessionSink::continuePlaying()
 {
+	if (m_buffer == NULL) 
+	{
+		allocate(1024*1024);
+	}
 	Boolean ret = False;
 	if (source() != NULL)
 	{
