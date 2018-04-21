@@ -10,12 +10,14 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <string>
 #include <map>
 #include <signal.h>
 #include "environment.h"
-#include "rtspconnectionclient.h"
+#include "sdpclient.h"
 
-class MyCallback : public RTSPConnection::Callback
+class MyCallback : public SDPClient::Callback
 {
 	private:
 		std::map<std::string,std::ofstream> m_ofs;
@@ -35,7 +37,7 @@ class MyCallback : public RTSPConnection::Callback
 			std::cout << id << " " << media << "/" <<  codec << std::endl;
 			return true;
 		}
-		
+				
 		virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) {
 			std::cout << id << " " << size << " ts:" << presentationTime.tv_sec << "." << presentationTime.tv_usec << std::endl;
 			auto it = m_ofs.find(id);
@@ -45,19 +47,8 @@ class MyCallback : public RTSPConnection::Callback
 			return true;
 		}
 		
-		virtual void    onError(RTSPConnection& connection, const char* message) {
+		virtual void    onError(SDPClient& connection, const char* message) {
 			std::cout << "Error:" << message << std::endl;
-			connection.start(10);
-		}
-		
-		virtual void    onConnectionTimeout(RTSPConnection& connection) {
-			std::cout << "Connection timeout -> retry" << std::endl;
-			connection.start();
-		}
-		
-		virtual void    onDataTimeout(RTSPConnection& connection)       {
-			std::cout << "Data timeout -> retry" << std::endl;
-			connection.start();
 		}		
 };
 
@@ -77,26 +68,17 @@ void usage(const char* app) {
 int main(int argc, char *argv[])
 {
 	// default value
-	int  timeout = 10;
-	int rtptransport = RTSPConnection::RTPUDPUNICAST;
-	int  logLevel = 255;
 	std::string output;
 	
 	// decode args
 	int c = 0;
-	while ((c = getopt (argc, argv, "hv:" "t:o:" "MTH")) != -1)
+	while ((c = getopt (argc, argv, "hv:" "o:")) != -1)
 	{
 		switch (c)
 		{
-			case 'v':	logLevel   = atoi(optarg);  break;
 			case 'h':	usage(argv[0]);  return 0;
 			
-			case 't':	timeout= atoi(optarg);  break;
-			case 'o':	output = optarg;  break;
-			
-			case 'M':	rtptransport = RTSPConnection::RTPUDPMULTICAST;  break;
-			case 'T':	rtptransport = RTSPConnection::RTPOVERTCP;  break;
-			case 'H':	rtptransport = RTSPConnection::RTPOVERHTTP;  break;
+			case 'o':	output = optarg;  break;			
 		}
 	}
 	
@@ -104,7 +86,33 @@ int main(int argc, char *argv[])
 	{
 		Environment env(stop);
 		MyCallback cb(output);
-		RTSPConnection rtspClient(env, &cb, argv[optind], timeout, rtptransport, logLevel);
+		std::string url = argv[optind];
+		
+		std::string sdp;
+		if (url.find("rtp://") == 0) {
+			std::istringstream is(url.substr(strlen("rtp://")));
+			std::string ip;
+			std::getline(is, ip, ':');
+			std::string port;
+			std::getline(is, port, '/');
+			std::string rtppayloadtype("96");
+			std::getline(is, rtppayloadtype, '/');
+			std::string codec("H264");
+			std::getline(is, codec);
+			
+			std::ostringstream os;
+			os << "m=video " << port << " RTP/AVP " << rtppayloadtype << "\r\n"
+			   << "c=IN IP4 " << ip <<"\r\n"
+			   << "a=rtpmap:" << rtppayloadtype << " " << codec << "\r\n";
+			sdp.assign(os.str());
+
+		} else {		
+			std::ifstream is(url);
+			sdp.assign((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
+		}
+		std::cout << "SDP:\n" << sdp << std::endl;
+		
+		SDPClient rtpClient(env, &cb, sdp.c_str());
 		signal(SIGINT, sig_handler);
 		std::cout << "Start mainloop" << std::endl;
 		env.mainloop();	

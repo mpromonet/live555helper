@@ -17,7 +17,7 @@ LIST_CPP:=$(wildcard src/*.cpp)
 LIST_OBJ:=$(LIST_CPP:%.cpp=%.o)
 LIB_NAME:=$(notdir $(CURDIR)).a
 
-all: $(LIB_NAME) testRtspClient
+all: $(LIB_NAME) testRtspClient testSdpClient
 
 %.o: %.cpp
 	$(CC) -c -o $@ $< $(CFLAGS)
@@ -27,6 +27,10 @@ $(LIB_NAME): $(LIST_OBJ)
 
 testRtspClient: testRtspClient.cpp $(LIB_NAME)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+	
+testSdpClient: testSdpClient.cpp $(LIB_NAME)
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
 
 clean:
 	-@$(RM) *.a $(LIST_OBJ) testRtspClient

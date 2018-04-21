@@ -12,6 +12,7 @@
 #pragma once
 
 #include "environment.h"
+#include "SessionSink.h"
 #include "liveMedia.hh"
 #include <string>
 
@@ -50,49 +51,12 @@ class RTSPConnection
 		/* ---------------------------------------------------------------------------
 		**  RTSP client callback interface
 		** -------------------------------------------------------------------------*/
-		class Callback
+		class Callback : public SessionCallback
 		{
 			public:
-				virtual bool    onNewSession(const char* id, const char* media, const char* codec, const char* sdp) { return true; }
-				virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) = 0;
-				virtual ssize_t onNewBuffer(unsigned char*, ssize_t )  { return 0; }
 				virtual void    onError(RTSPConnection&, const char*)  {}
 				virtual void    onConnectionTimeout(RTSPConnection&)   {}
 				virtual void    onDataTimeout(RTSPConnection&)         {}
-		};
-
-	protected:
-		/* ---------------------------------------------------------------------------
-		**  RTSP client Sink
-		** -------------------------------------------------------------------------*/
-		class SessionSink: public MediaSink 
-		{
-			public:
-				static SessionSink* createNew(UsageEnvironment& env, Callback* callback) { return new SessionSink(env, callback); }
-
-			private:
-				SessionSink(UsageEnvironment& env, Callback* callback);
-				virtual ~SessionSink();
-
-				void allocate(ssize_t bufferSize);
-
-				static void afterGettingFrame(void* clientData, unsigned frameSize,
-							unsigned numTruncatedBytes,
-							struct timeval presentationTime,
-							unsigned durationInMicroseconds)
-				{
-					static_cast<SessionSink*>(clientData)->afterGettingFrame(frameSize, numTruncatedBytes, presentationTime, durationInMicroseconds);
-				}
-				
-				void afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime, unsigned durationInMicroseconds);
-
-				virtual Boolean continuePlaying();
-
-			private:
-				u_int8_t*              m_buffer;
-				size_t                 m_bufferSize;
-				Callback*              m_callback; 	
-				ssize_t                m_markerSize;
 		};
 	
 		/* ---------------------------------------------------------------------------

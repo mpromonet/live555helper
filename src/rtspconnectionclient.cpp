@@ -12,68 +12,6 @@
 
 #include "rtspconnectionclient.h"
 
-RTSPConnection::SessionSink::SessionSink(UsageEnvironment& env, Callback* callback) 
-	: MediaSink(env)
-	, m_buffer(NULL)
-	, m_bufferSize(0)
-	, m_callback(callback) 
-	, m_markerSize(0)
-{
-}
-
-RTSPConnection::SessionSink::~SessionSink()
-{
-	delete [] m_buffer;
-}
-
-void RTSPConnection::SessionSink::allocate(ssize_t bufferSize)
-{
-	m_bufferSize = bufferSize;
-	m_buffer = new u_int8_t[m_bufferSize];
-	if (m_callback)
-	{
-		m_markerSize = m_callback->onNewBuffer(m_buffer, m_bufferSize);
-		envir() << "markerSize:" << (int)m_markerSize << "\n";
-	}
-}
-
-
-void RTSPConnection::SessionSink::afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime, unsigned durationInMicroseconds)
-{
-	if (numTruncatedBytes != 0)
-	{
-		delete [] m_buffer;
-		envir() << "buffer too small " << (int)m_bufferSize << " allocate bigger one\n";
-		allocate(m_bufferSize*2);
-	}
-	else if (m_callback)
-	{
-		if (!m_callback->onData(this->name(), m_buffer, frameSize+m_markerSize, presentationTime))
-		{
-			envir() << "NOTIFY failed\n";
-		}
-	}
-	this->continuePlaying();
-}
-
-Boolean RTSPConnection::SessionSink::continuePlaying()
-{
-	if (m_buffer == NULL) 
-	{
-		allocate(1024*1024);
-	}
-	Boolean ret = False;
-	if (source() != NULL)
-	{
-		source()->getNextFrame(m_buffer+m_markerSize, m_bufferSize-m_markerSize,
-				afterGettingFrame, this,
-				onSourceClosure, this);
-		ret = True;
-	}
-	return ret;	
-}
-
-
 RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout, int rtptransport, int verbosityLevel) 
 				: m_startCallbackTask(NULL)
 				, m_env(env)
