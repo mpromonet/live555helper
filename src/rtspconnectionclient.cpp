@@ -132,9 +132,8 @@ void RTSPConnection::RTSPClientConnection::sendNextCommand()
 				{				
 					envir() << "Initiated " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession" << "\n";
 				}
+				this->sendSetupCommand(*m_subSession, continueAfterSETUP, false, (m_rtptransport == RTPOVERTCP), (m_rtptransport == RTPUDPMULTICAST) );
 			}
-
-			this->sendSetupCommand(*m_subSession, continueAfterSETUP, false, (m_rtptransport == RTPOVERTCP), (m_rtptransport == RTPUDPMULTICAST) );
 		}
 		else
 		{

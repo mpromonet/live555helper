@@ -1,5 +1,5 @@
 CFLAGS = -W -Wall -pthread -g -pipe $(CFLAGS_EXTRA)
-CFLAGS += -I inc -g 
+CFLAGS += -I inc -g  -std=c++11 
 RM = rm -rf
 CC = g++
 AR = ar
