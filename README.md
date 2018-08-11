@@ -1,7 +1,7 @@
 # live555helper
 Helper for live555
 
-The aim of this project is to simplify usage of live555, that is powerful but need to implement lots of logic.
+The aim of this project is to simplify usage of [live555 Streaming Media](http://www.live555.com/liveMedia/), that is powerful but need to implement lots of logic.
 
 For instance a dummy RTSP client could be implement with :
 
