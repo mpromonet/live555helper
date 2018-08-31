@@ -3,7 +3,7 @@
 ** support, and with no warranty, express or implied, as to its usefulness for
 ** any purpose.
 **
-** testRtspClient.cpp
+** testSdpClient.cpp
 ** 
 ** Simple Test Using live555helper
 ** -------------------------------------------------------------------------*/
