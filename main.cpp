@@ -16,6 +16,7 @@
 #include "environment.h"
 #include "rtspconnectionclient.h"
 #include "sdpclient.h"
+#include "mkvclient.h"
 
 class RTSPCallback : public RTSPConnection::Callback
 {
@@ -98,6 +99,37 @@ class SDPCallback : public SDPClient::Callback
 		}		
 };
 
+class MKVCallback : public MKVClient::Callback
+{
+	private:
+		std::map<std::string,std::ofstream> m_ofs;
+		std::string m_fileprefix;
+		
+	public:
+		MKVCallback(const std::string & output) : m_fileprefix(output)  {}
+		
+		virtual bool    onNewSession(const char* id, const char* media, const char* codec, const char*) {
+			if (!m_fileprefix.empty()) {
+				auto it = m_ofs.find(id);
+				if (it == m_ofs.end()) {
+					std::string filename = m_fileprefix + "_" + media + "_" + codec + "_" + id;
+					m_ofs[id].open(filename.c_str(), std::ofstream::out | std::ofstream::trunc);
+				}
+			}
+			std::cout << id << " " << media << "/" <<  codec << std::endl;
+			return true;
+		}
+		
+		virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) {
+			std::cout << id << " " << size << " ts:" << presentationTime.tv_sec << "." << presentationTime.tv_usec << std::endl;
+			auto it = m_ofs.find(id);
+			if (it != m_ofs.end()) {
+				it->second.write((char*)buffer, size);
+			}
+			return true;
+		}
+};
+
 char stop = 0;
 void sig_handler(int signo)
 {
@@ -144,6 +176,15 @@ int main(int argc, char *argv[])
 		if (url.find("rtsp://") == 0) {
 			RTSPCallback cb(output);
 			RTSPConnection rtspClient(env, &cb, url.c_str(), timeout, rtptransport, logLevel);
+			
+			signal(SIGINT, sig_handler);
+			std::cout << "Start mainloop" << std::endl;
+			env.mainloop();	
+			
+		} else if (url.find("file://") == 0) {
+			url = url.erase(0,strlen("file://"));
+			MKVCallback cb(output);
+			MKVClient mkvClient(env, &cb, url.c_str());
 			
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;
