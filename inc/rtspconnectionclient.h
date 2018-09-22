@@ -15,7 +15,7 @@
 #include "SessionSink.h"
 #include "liveMedia.hh"
 #include <string>
-
+#include <map>
 
 #define RTSP_CALLBACK(uri, resultCode, resultString) \
 static void continueAfter ## uri(RTSPClient* rtspClient, int resultCode, char* resultString) { static_cast<RTSPConnection::RTSPClientConnection*>(rtspClient)->continueAfter ## uri(resultCode, resultString); } \
@@ -48,6 +48,33 @@ class RTSPConnection
 			RTPOVERHTTP
 		};
 	
+		static int decodeTimeoutOption(const std::map<std::string,std::string> & opts) {
+			int timeout = 10;
+			if (opts.find("timeout") != opts.end()) 
+			{
+				std::string timeoutString = opts.at("timeout");
+				timeout = std::stoi(timeoutString);
+			}
+			return timeout;
+		}
+
+		static int decodeRTPTransport(const std::map<std::string,std::string> & opts) 
+		{
+			int rtptransport = RTSPConnection::RTPUDPUNICAST;
+			if (opts.find("rtptransport") != opts.end()) 
+			{
+				std::string rtpTransportString = opts.at("rtptransport");
+				if (rtpTransportString == "tcp") {
+					rtptransport = RTSPConnection::RTPOVERTCP;
+				} else if (rtpTransportString == "http") {
+					rtptransport = RTSPConnection::RTPOVERHTTP;
+				} else if (rtpTransportString == "multicast") {
+					rtptransport = RTSPConnection::RTPUDPMULTICAST;
+				}
+			}
+			return rtptransport;
+		}	
+
 		/* ---------------------------------------------------------------------------
 		**  RTSP client callback interface
 		** -------------------------------------------------------------------------*/
@@ -93,7 +120,9 @@ class RTSPConnection
 		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int rtptransport = RTPUDPUNICAST, int verbosityLevel = 1);
 		virtual ~RTSPConnection();
 
-		void start(unsigned int delay = 0);
+		void        start(unsigned int delay = 0);
+		std::string getUrl()          { return m_url; }
+		int         getRtpTransport() { return m_rtptransport; }
 
 	protected:
 		TASK_CALLBACK(RTSPConnection,startCallback);
