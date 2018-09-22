@@ -182,7 +182,6 @@ int main(int argc, char *argv[])
 			env.mainloop();	
 			
 		} else if (url.find("file://") == 0) {
-			url = url.erase(0,strlen("file://"));
 			MKVCallback cb(output);
 			MKVClient mkvClient(env, &cb, url.c_str());
 			

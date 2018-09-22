@@ -13,7 +13,7 @@
 #include <sstream>
 
 #include "mkvclient.h"
-
+#include "Base64.hh"
 
 void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 	
@@ -34,31 +34,42 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 			std::string codec;
 			getline(is, codec, '/');
 			
+			char* encoded = base64Encode((const char*)track->codecPrivate, track->codecPrivateSize);
+
 			MediaSink* sink = SessionSink::createNew(m_env, m_callback);	 
 			if (sink == NULL) 
 			{
 				m_env << "Failed to create sink for \"" << track->mimeType << "\" subsession error: " << m_env.getResultMsg() << "\n";
 				m_callback->onError(*this, m_env.getResultMsg());			
 			} 
-			else if (m_callback->onNewSession(sink->name(), media.c_str(), codec.c_str(), "")) 
+			else if (m_callback->onNewSession(sink->name(), media.c_str(), codec.c_str(), encoded)) 
 			{
-				m_env << "Start playing sink for \"" << track->mimeType << "\" codecPrivateSize:" << track->codecPrivateSize << "\n";
+				m_env << "Start playing sink for \"" << track->mimeType << "\" codecPrivate:" << encoded << "\n";
 				sink->startPlaying(*trackSource, NULL, NULL);	  
 			} 
 			else 
 			{
 				Medium::close(sink);
 			}		
+
+			delete [] encoded;
 		}
 	}
 }
 
 
-MKVClient::MKVClient(Environment& env, Callback* callback, const char* inputFileName) 
+MKVClient::MKVClient(Environment& env, Callback* callback, const char* url) 
 				: m_env(env)
 				, m_callback(callback)
 {
-	MatroskaFile::createNew(env, inputFileName, onMatroskaFileCreation, this);	
+	const char* prefix = "file://";
+
+	std::string fileurl(url);
+	if (fileurl.find(prefix) == 0) {
+		fileurl = fileurl.erase(0,strlen(prefix));
+	}
+
+	MatroskaFile::createNew(env, fileurl.c_str(), onMatroskaFileCreation, this);	
 }
 
 MKVClient::~MKVClient()
