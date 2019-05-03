@@ -45,7 +45,7 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 			else if (m_callback->onNewSession(sink->name(), media.c_str(), codec.c_str(), encoded)) 
 			{
 				m_env << "Start playing sink for \"" << track->mimeType << "\" codecPrivate:" << encoded << "\n";
-				sink->startPlaying(*trackSource, NULL, NULL);	  
+				sink->startPlaying(*trackSource, onEndOfFile, this);	  
 			} 
 			else 
 			{
@@ -57,6 +57,10 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 	}
 }
 
+void MKVClient::onEndOfFile() {
+	m_env.stop();
+}
+	
 
 MKVClient::MKVClient(Environment& env, Callback* callback, const char* url) 
 				: m_env(env)

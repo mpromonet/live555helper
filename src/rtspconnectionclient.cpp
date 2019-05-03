@@ -160,8 +160,19 @@ void RTSPConnection::RTSPClientConnection::continueAfterDESCRIBE(int resultCode,
 			envir() << "Got SDP:\n" << resultString << "\n";
 		}
 		m_session = MediaSession::createNew(envir(), resultString);
-		m_subSessionIter = new MediaSubsessionIterator(*m_session);
-		this->sendNextCommand();  
+		if (m_session)
+		{
+			m_subSessionIter = new MediaSubsessionIterator(*m_session);
+			this->sendNextCommand();
+		}
+		else
+		{
+			if (fVerbosityLevel > 1)
+			{
+				envir() << "MediaSession::createNew() failed! (result string: " << resultString << ")\n";
+			}
+			m_callback->onError(m_connection, "MediaSession::createNew() failed!");
+		} 
 	}
 	delete[] resultString;
 }

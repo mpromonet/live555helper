@@ -8,7 +8,7 @@ add_executable (${PROJECT_NAME} main.cpp)
 
 if (NOT EXISTS live)
     file (DOWNLOAD http://www.live555.com/liveMedia/public/live555-latest.tar.gz ${CMAKE_SOURCE_DIR}/live555-latest.tar.gz )
-    EXECUTE_PROCESS(COMMAND 7z x live555-latest.tar.gz -so COMMAND 7z x -aoa -ttar -si)
+    EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xvf live555-latest.tar.gz)
 endif(NOT EXISTS live) 
 
 FILE(GLOB LIVEHELPERSOURCE live/groupsock/*.c* live/liveMedia/*.c* live/UsageEnvironment/*.c* live/BasicUsageEnvironment/*.c* src/*.cpp)

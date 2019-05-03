@@ -1,7 +1,6 @@
 src/*.o
 *.a
-testRtspClient
-testSdpClient
+live555helpertest
 Makefile
 CMakeCache.txt
 CMakeFiles/
