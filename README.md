@@ -62,3 +62,27 @@ A simple SDP client could be implement with :
 		env.mainloop();
 		return 0;
 	}
+
+A simple MKV client could be implement with :
+
+	#include <iostream>
+	#include "environment.h"
+	#include "mkvclient.h"
+
+	int main(int argc, char *argv[])
+	{
+		class MyCallback : public MKVClient::Callback
+		{
+			public:
+				virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) {
+					std::cout << id << " " << size << " ts:" << presentationTime.tv_sec << "." << presentationTime.tv_usec << std::endl;
+					return true;
+				}
+		};
+
+		Environment env;
+		MyCallback cb;
+		MKVClient mkvClient(env, &cb, "file://2008-Big_Buck_Bunny-496k.mkv");
+		env.mainloop();
+		return 0;
+	}
