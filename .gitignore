@@ -2,3 +2,7 @@ src/*.o
 *.a
 testRtspClient
 testSdpClient
+Makefile
+CMakeCache.txt
+CMakeFiles/
+*.cmake
