@@ -37,7 +37,7 @@ A simple SDP client could be implement with :
 
 	int main(int argc, char *argv[])
 	{
-		class MyCallback : public RTSPConnection::Callback
+		class MyCallback : public SDPClient::Callback
 		{
 			public:
 				virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) {
