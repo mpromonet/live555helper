@@ -34,7 +34,19 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 			std::string codec;
 			getline(is, codec, '/');
 			
-			char* encoded = base64Encode((const char*)track->codecPrivate, track->codecPrivateSize);
+			std::ostringstream os;
+			struct in_addr destinationAddress;
+			const Port rtpPort(0);
+			Groupsock gs(m_env, destinationAddress, rtpPort, 0);
+
+			RTPSink* rtpsink = m_mkvfile->createRTPSinkForTrackNumber(trackNumber, &gs, 96);
+			os << rtpsink->rtpmapLine();
+			const char* auxLine = rtpsink->auxSDPLine();
+			if (auxLine) {
+				os << auxLine;
+			}
+			Medium::close(rtpsink);
+			std::string sdp(os.str());
 
 			MediaSink* sink = SessionSink::createNew(m_env, m_callback);	 
 			if (sink == NULL) 
@@ -42,17 +54,15 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 				m_env << "Failed to create sink for \"" << track->mimeType << "\" subsession error: " << m_env.getResultMsg() << "\n";
 				m_callback->onError(*this, m_env.getResultMsg());			
 			} 
-			else if (m_callback->onNewSession(sink->name(), media.c_str(), codec.c_str(), encoded)) 
+			else if (m_callback->onNewSession(sink->name(), media.c_str(), codec.c_str(), sdp.c_str())) 
 			{
-				m_env << "Start playing sink for \"" << track->mimeType << "\" codecPrivate:" << encoded << "\n";
+				m_env << "Start playing sink for \"" << track->mimeType << "\" sdp:" << sdp.c_str() << "\n";
 				sink->startPlaying(*trackSource, onEndOfFile, this);	  
 			} 
 			else 
 			{
 				Medium::close(sink);
 			}		
-
-			delete [] encoded;
 		}
 	}
 }
