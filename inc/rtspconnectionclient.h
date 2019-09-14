@@ -92,7 +92,7 @@ class RTSPConnection
 		class RTSPClientConnection : public RTSPClient
 		{
 			public:
-				RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, int rtptransport, int verbosityLevel);
+				RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, int rtptransport, int verbosityLevel = 0);
 				virtual ~RTSPClientConnection(); 
 			
 			protected:
@@ -117,6 +117,7 @@ class RTSPConnection
 		};
 		
 	public:
+		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, const std::map<std::string,std::string> & opts, int verbosityLevel = 1);
 		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int rtptransport = RTPUDPUNICAST, int verbosityLevel = 1);
 		virtual ~RTSPConnection();
 

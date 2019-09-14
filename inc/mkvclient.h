@@ -15,6 +15,7 @@
 #include "SessionSink.h"
 #include "liveMedia.hh"
 #include <string>
+#include <map>
 
 
 /* ---------------------------------------------------------------------------
@@ -33,7 +34,7 @@ class MKVClient
 		};
 			
 	public:
-		MKVClient(Environment& env, Callback* callback, const char* path);
+		MKVClient(Environment& env, Callback* callback, const char* path, const std::map<std::string,std::string> & opts, int verbosityLevel=1);
 		virtual ~MKVClient();
 	
 	private:

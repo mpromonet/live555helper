@@ -1,5 +1,6 @@
 src/*.o
 *.a
+*.lib
 live555helpertest
 Makefile
 CMakeCache.txt

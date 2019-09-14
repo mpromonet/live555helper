@@ -72,7 +72,7 @@ void MKVClient::onEndOfFile() {
 }
 	
 
-MKVClient::MKVClient(Environment& env, Callback* callback, const char* url) 
+MKVClient::MKVClient(Environment& env, Callback* callback, const char* url, const std::map<std::string,std::string> & opts, int verbosityLevel) 
 				: m_env(env)
 				, m_callback(callback)
 {

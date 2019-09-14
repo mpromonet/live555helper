@@ -12,6 +12,7 @@
 
 #include "rtspconnectionclient.h"
 
+
 RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout, int rtptransport, int verbosityLevel) 
 				: m_startCallbackTask(NULL)
 				, m_env(env)
@@ -19,6 +20,19 @@ RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char*
 				, m_url(rtspURL)
 				, m_timeout(timeout)
 				, m_rtptransport(rtptransport)
+				, m_verbosity(verbosityLevel)
+				, m_rtspClient(NULL)
+{
+	this->start();
+}
+
+RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, const std::map<std::string,std::string> & opts, int verbosityLevel) 
+				: m_startCallbackTask(NULL)
+				, m_env(env)
+				, m_callback(callback)
+				, m_url(rtspURL)
+				, m_timeout(decodeTimeoutOption(opts))
+				, m_rtptransport(decodeRTPTransport(opts))
 				, m_verbosity(verbosityLevel)
 				, m_rtspClient(NULL)
 {
