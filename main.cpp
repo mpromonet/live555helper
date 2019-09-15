@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
 			
 		} else if (url.find("file://") == 0) {
 			MKVCallback cb(output);
-			MKVClient mkvClient(env, &cb, url.c_str());
+			MKVClient mkvClient(env, &cb, url.c_str(), std::map<std::string,std::string>());
 			
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;
