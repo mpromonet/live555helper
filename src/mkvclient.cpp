@@ -13,7 +13,6 @@
 #include <sstream>
 
 #include "mkvclient.h"
-#include "Base64.hh"
 
 void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 	
@@ -61,13 +60,15 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 			} 
 			else 
 			{
-				Medium::close(sink);
+				// MKV need to start all tracks to start to read the file
+				sink->startPlaying(*trackSource, onEndOfFile, this);
 			}		
 		}
 	}
 }
 
 void MKVClient::onEndOfFile() {
+	m_env << "end of file" << "\n";
 	m_env.stop();
 }
 	
