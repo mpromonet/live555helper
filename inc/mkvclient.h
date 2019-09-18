@@ -19,23 +19,28 @@
 
 
 /* ---------------------------------------------------------------------------
-**  SDP client connection interface
+**  MKV client connection interface
 ** -------------------------------------------------------------------------*/
 class MKVClient 
 {
 	public:
 		/* ---------------------------------------------------------------------------
-		**  SDP client callback interface
+		**  MKV client callback interface
 		** -------------------------------------------------------------------------*/
 		class Callback : public SessionCallback
 		{
 			public:
 				virtual void    onError(MKVClient&, const char*)  {}
+				virtual void    onEndOfFile(MKVClient& client)  { client.stop(); }
 		};
 			
 	public:
 		MKVClient(Environment& env, Callback* callback, const char* path, const std::map<std::string,std::string> & opts, int verbosityLevel=1);
 		virtual ~MKVClient();
+
+		void stop() {
+			m_env.stop();
+		}
 	
 	private:
 		void onMatroskaFileCreation(MatroskaFile* newFile);

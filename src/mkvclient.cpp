@@ -43,6 +43,7 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 			const char* auxLine = rtpsink->auxSDPLine();
 			if (auxLine) {
 				os << auxLine;
+
 			}
 			Medium::close(rtpsink);
 			std::string sdp(os.str());
@@ -61,15 +62,20 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 			else 
 			{
 				// MKV need to start all tracks to start to read the file
-				sink->startPlaying(*trackSource, onEndOfFile, this);
+				Medium::close(sink);
+				MediaSink* sink = SessionSink::createNew(m_env, NULL);
+				if (sink != NULL) {
+					sink->startPlaying(*trackSource, onEndOfFile, this);
+				}
 			}		
 		}
 	}
 }
 
 void MKVClient::onEndOfFile() {
-	m_env << "end of file" << "\n";
-	m_env.stop();
+	if (m_callback) {
+		m_callback->onEndOfFile(*this);
+	}
 }
 	
 
