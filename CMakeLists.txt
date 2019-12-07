@@ -20,6 +20,7 @@ add_library (liblive555helper STATIC ${LIVEHELPERSOURCE})
 target_include_directories(liblive555helper PUBLIC ${LIVE}/groupsock/include ${LIVE}/liveMedia/include ${LIVE}/UsageEnvironment/include ${LIVE}/BasicUsageEnvironment/include inc)
 target_link_libraries (${PROJECT_NAME} liblive555helper) 
 
+add_definitions(-DNO_OPENSSL=1)
 if (MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 	target_link_libraries (${PROJECT_NAME} ws2_32)
