@@ -64,27 +64,32 @@ RTSPConnection::~RTSPConnection()
 	Medium::close(m_rtspClient);
 }
 
-int getHttpTunnelPort(Environment& env, int  rtptransport, const char* rtspURL) 
+int getHttpTunnelPort(int  rtptransport, const char* rtspURL) 
 {
 	int httpTunnelPort = 0;
 	if (rtptransport == RTSPConnection::RTPOVERHTTP) 
 	{
-		char* username = NULL;
-		char* password = NULL;
-		NetAddress address;
-		portNumBits portNum;
-		if (RTSPClient::parseRTSPURL(env, rtspURL, username, password, address, portNum)) {
-			httpTunnelPort = portNum;	
-			env << "Using httpTunnelPort: " << httpTunnelPort<< "\n";			
-		}
-		delete [] username;
-		delete [] password;
+		std::string url = rtspURL;
+                const char * pattern = "://";
+                std::size_t pos = url.find(pattern);
+                if (pos != std::string::npos) {
+                        url.erase(0,pos+strlen(pattern));
+                }
+                pos = url.find_first_of("/");
+                if (pos != std::string::npos) {
+                        url.erase(pos);
+                }
+                pos = url.find_first_of(":");
+                if (pos != std::string::npos) {
+			url.erase(0,pos+1);
+                        httpTunnelPort = std::stoi(url);
+                }
 	}
 	return httpTunnelPort;
 }
 		
 RTSPConnection::RTSPClientConnection::RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, int  rtptransport, int verbosityLevel) 
-				: RTSPClientConstrutor(env, rtspURL, verbosityLevel, NULL, getHttpTunnelPort(env, rtptransport, rtspURL))
+				: RTSPClientConstrutor(env, rtspURL, verbosityLevel, NULL, getHttpTunnelPort(rtptransport, rtspURL))
 				, m_connection(connection)
 				, m_timeout(timeout)
 				, m_rtptransport(rtptransport)
