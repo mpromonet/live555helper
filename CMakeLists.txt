@@ -8,7 +8,7 @@ add_executable (${PROJECT_NAME} main.cpp)
 
 set(LIVE ${CMAKE_BINARY_DIR}/live)
 if (NOT EXISTS ${LIVE})
-    file (DOWNLOAD http://www.live555.com/liveMedia/public/live555-latest.tar.gz ${CMAKE_BINARY_DIR}/live555.tar.gz )
+    file (DOWNLOAD https://download.videolan.org/pub/contrib/live555/live.2019.12.05.tar.gz ${CMAKE_BINARY_DIR}/live555.tar.gz )
     EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xvf ${CMAKE_BINARY_DIR}/live555.tar.gz  RESULT_VARIABLE unpack_result)
     if(NOT unpack_result STREQUAL "0")
         message(FATAL_ERROR "Fetching live555 failed!")
