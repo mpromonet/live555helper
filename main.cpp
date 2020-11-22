@@ -18,6 +18,7 @@
 #include "sdpclient.h"
 #include "mkvclient.h"
 
+
 class RTSPCallback : public RTSPConnection::Callback
 {
 	private:
@@ -214,7 +215,7 @@ int main(int argc, char *argv[])
 			}
 			std::cout << "SDP:\n" << sdp << std::endl;
 			SDPCallback cb(output);			
-			SDPClient rtpClient(env, &cb, sdp.c_str());
+			SDPClient rtpClient(env, &cb, sdp.c_str(), std::map<std::string,std::string>());
 			
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;

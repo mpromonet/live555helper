@@ -15,6 +15,7 @@
 #include "SessionSink.h"
 #include "liveMedia.hh"
 #include <string>
+#include <map>
 
 
 /* ---------------------------------------------------------------------------
@@ -33,7 +34,7 @@ class SDPClient
 		};
 			
 	public:
-		SDPClient(Environment& env, Callback* callback, const char* SDP);
+		SDPClient(Environment& env, Callback* callback, const char* SDP, const std::map<std::string,std::string> & opts, int verbosityLevel=1);
 		virtual ~SDPClient();
 	
 	protected:

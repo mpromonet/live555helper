@@ -12,7 +12,7 @@
 
 #include "sdpclient.h"
 
-SDPClient::SDPClient(Environment& env, Callback* callback, const char* sdp) 
+SDPClient::SDPClient(Environment& env, Callback* callback, const char* sdp, const std::map<std::string,std::string> & opts, int verbosityLevel) 
 				: m_env(env)
 				, m_callback(callback)
 {
