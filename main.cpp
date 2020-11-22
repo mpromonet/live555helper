@@ -193,22 +193,7 @@ int main(int argc, char *argv[])
 		} else {
 			std::string sdp;
 			if (url.find("rtp://") == 0) {
-				std::istringstream is(url.substr(strlen("rtp://")));
-				std::string ip;
-				std::getline(is, ip, ':');
-				std::string port;
-				std::getline(is, port, '/');
-				std::string rtppayloadtype("96");
-				std::getline(is, rtppayloadtype, '/');
-				std::string codec("H264");
-				std::getline(is, codec);
-				
-				std::ostringstream os;
-				os << "m=video " << port << " RTP/AVP " << rtppayloadtype << "\r\n"
-				   << "c=IN IP4 " << ip <<"\r\n"
-				   << "a=rtpmap:" << rtppayloadtype << " " << codec << "\r\n";
-				sdp.assign(os.str());
-
+				sdp.assign(SDPClient::getSdpFromRtpUrl(url));
 			} else {		
 				std::ifstream is(url);
 				sdp.assign((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
