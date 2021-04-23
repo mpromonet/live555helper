@@ -34,7 +34,7 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 			getline(is, codec, '/');
 			
 			std::ostringstream os;
-			struct in_addr destinationAddress;
+			struct sockaddr_storage destinationAddress;
 			const Port rtpPort(0);
 			Groupsock gs(m_env, destinationAddress, rtpPort, 0);
 

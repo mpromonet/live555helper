@@ -11,6 +11,9 @@
 
 
 #include "rtspconnectionclient.h"
+#include <algorithm>
+#include <iostream>
+#include <sstream>
 
 
 RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout, int rtptransport, int verbosityLevel) 
@@ -125,11 +128,44 @@ RTSPConnection::RTSPClientConnection::~RTSPClientConnection()
 				Medium::close(subsession->sink);
 				subsession->sink = NULL;
 			}
-		}	
+		}
+		envir() << " Send Teardown command" << "\n";
+		this->sendTeardownCommand(*m_session, continueAfterTEARDOWN);
 		Medium::close(m_session);
 	}
 }
-		
+
+/// <summary>
+/// Get params npttime or starttime from a query string 
+/// urlStr rtsp://192.168.31.124:554/camera02?npttime=74652
+/// urlStr rtsp://192.168.31.124:554/camera02?starttime=20210129T103000Z
+/// Be aware only the first params is sent to here
+/// </summary>
+void RTSPConnection::RTSPClientConnection::setNptstartTime()
+{
+	m_nptStartTime = 0;
+	m_playforinit = 0;
+	std::string urlStr = m_connection.getUrl();
+	std::istringstream is(urlStr);
+	std::map<std::string, std::string> opts;
+	std::string key, value, querystring;
+	while (std::getline(std::getline(std::getline(is, querystring, '?'), key, '='), value, '&'))
+	{
+		opts[key] = value;
+	}
+
+	if (opts.count("npttime") > 0)
+	{
+		m_nptStartTime = std::stod(opts.at("npttime"));
+	}
+	
+	if (opts.find("starttime") != opts.end())
+	{
+		m_clockStartTime = opts["starttime"];
+	}
+}
+
+
 void RTSPConnection::RTSPClientConnection::sendNextCommand() 
 {
 	if (m_subSessionIter == NULL)
@@ -147,10 +183,10 @@ void RTSPConnection::RTSPClientConnection::sendNextCommand()
 			{
 				envir() << "Failed to initiate " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession: " << envir().getResultMsg() << "\n";
 				this->sendNextCommand();
-			} 
+			}
 			else 
 			{
-				if (fVerbosityLevel > 1) 
+				if (fVerbosityLevel > 1)
 				{				
 					envir() << "Initiated " << m_subSession->mediumName() << "/" << m_subSession->codecName() << " subsession" << "\n";
 				}
@@ -160,10 +196,31 @@ void RTSPConnection::RTSPClientConnection::sendNextCommand()
 		else
 		{
 			// no more subsession to SETUP, send PLAY
-			this->sendPlayCommand(*m_session, continueAfterPLAY);
+			setNptstartTime();
+			if (fVerbosityLevel > 1)
+			{
+				envir() << "****************************************************************************************\n";
+				envir() << " nptTime is given read video from it :: m_nptStartTime " << m_nptStartTime << "\n";
+				envir() << " clockstarttime is given read video from it :: m_clockStartTime " << m_clockStartTime.c_str() << "\n";
+			}
+			if (m_clockStartTime != "") {
+				m_playforinit = 1;
+				m_session->setRangeClockAttribute(m_clockStartTime.c_str(), nullptr);
+				this->sendPlayCommand(*m_session, continueAfterPLAY, m_clockStartTime.c_str());
+			}
+			else if (m_nptStartTime > 0) {
+				m_playforinit = 1;
+				this->sendPlayCommand(*m_session, continueAfterPLAY, m_nptStartTime);
+			}
+			else {
+				m_playforinit = 0;
+				this->sendPlayCommand(*m_session, continueAfterPLAY);
+			}
 		}
 	}
 }
+
+
 
 void RTSPConnection::RTSPClientConnection::continueAfterDESCRIBE(int resultCode, char* resultString)
 {
@@ -178,7 +235,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterDESCRIBE(int resultCode,
 		{
 			envir() << "Got SDP:\n" << resultString << "\n";
 		}
-		m_session = MediaSession::createNew(envir(), resultString);
+		m_session = MediaSessionHelper::createNew(envir(), resultString);
 		if (m_session)
 		{
 			m_subSessionIter = new MediaSubsessionIterator(*m_session);
@@ -188,9 +245,9 @@ void RTSPConnection::RTSPClientConnection::continueAfterDESCRIBE(int resultCode,
 		{
 			if (fVerbosityLevel > 1)
 			{
-				envir() << "MediaSession::createNew() failed! (result string: " << resultString << ")\n";
+				envir() << "MediaSessionHelper::createNew() failed! (result string: " << resultString << ")\n";
 			}
-			m_callback->onError(m_connection, "MediaSession::createNew() failed!");
+			m_callback->onError(m_connection, "MediaSessionHelper::createNew() failed!");
 		} 
 	}
 	delete[] resultString;
@@ -235,16 +292,60 @@ void RTSPConnection::RTSPClientConnection::continueAfterPLAY(int resultCode, cha
 	}
 	else
 	{
-		if (fVerbosityLevel > 1) 
+		if (m_playforinit > 0)
 		{
-			envir() << "PLAY OK" << "\n";
+			this->sendPauseCommand(*m_session, continueAfterPAUSE);
 		}
-		m_DataArrivalTimeoutTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
-
+		else {
+			if (fVerbosityLevel > 1) 
+			{
+				envir() << "PLAY OK" << "\n";
+			}
+			m_DataArrivalTimeoutTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
+		}
 	}
 	envir().taskScheduler().unscheduleDelayedTask(m_ConnectionTimeoutTask);
 	delete[] resultString;
 }
+
+void RTSPConnection::RTSPClientConnection::continueAfterPAUSE(int resultCode, char* resultString)
+{
+	if (resultCode != 0)
+	{
+		envir() << "Failed to PLAUSE: " << resultString << "\n";
+		m_callback->onError(m_connection, resultString);
+	}
+	else if (m_playforinit > 0)
+	{
+		if (fVerbosityLevel > 1)
+		{
+			envir() << " continueAfterPAUSE  m_playforinit: " << m_playforinit << "\n";
+			envir() << " continueAfterPAUSE  m_nptStartTime: " << m_nptStartTime << "\n";
+			envir() << " continueAfterPAUSE::m_clockStartTime " << m_clockStartTime.c_str() << "\n";
+			envir() << " continueAfterPAUSE::absStartTime " << m_session->absStartTime() << "**\n";
+		}
+		m_playforinit = 0;
+		if (m_clockStartTime != "") {
+			this->sendPlayCommand(*m_session, continueAfterPLAY, m_clockStartTime.c_str());
+		}
+		else if (m_nptStartTime > 0) {
+			this->sendPlayCommand(*m_session, continueAfterPLAY, m_nptStartTime);
+		}
+		else {
+			this->sendPlayCommand(*m_session, continueAfterPLAY);
+		}
+	}
+}
+
+void RTSPConnection::RTSPClientConnection::continueAfterTEARDOWN(int resultCode, char* resultString)
+{
+	if (resultCode != 0)
+	{
+		envir() << "Failed to PLAUSE: " << resultString << "\n";
+		m_callback->onError(m_connection, resultString);
+	}
+}
+
 
 void RTSPConnection::RTSPClientConnection::TaskConnectionTimeout()
 {
