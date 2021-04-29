@@ -97,10 +97,13 @@ class RTSPConnection
 			
 			protected:
 				void sendNextCommand(); 
-						
-				RTSP_CALLBACK(DESCRIBE,resultCode,resultString);
-				RTSP_CALLBACK(SETUP,resultCode,resultString);
-				RTSP_CALLBACK(PLAY,resultCode,resultString);
+				void setNptstartTime();
+
+				RTSP_CALLBACK(DESCRIBE, resultCode, resultString);
+				RTSP_CALLBACK(SETUP, resultCode, resultString);
+				RTSP_CALLBACK(PLAY, resultCode, resultString);
+				RTSP_CALLBACK(PAUSE, resultCode, resultString);
+				RTSP_CALLBACK(TEARDOWN, resultCode, resultString);
 			
 				TASK_CALLBACK(RTSPConnection::RTSPClientConnection,ConnectionTimeout);
 				TASK_CALLBACK(RTSPConnection::RTSPClientConnection,DataArrivalTimeout);
@@ -109,11 +112,15 @@ class RTSPConnection
 				RTSPConnection&          m_connection;
 				int                      m_timeout;
 				int                      m_rtptransport;
-				MediaSession*            m_session;                   
+				MediaSession*      		 m_session;                   
 				MediaSubsession*         m_subSession;             
 				MediaSubsessionIterator* m_subSessionIter;
 				Callback*                m_callback; 	
 				unsigned int             m_nbPacket;
+				int						 m_playforinit;
+				double					 m_nptStartTime;
+				std::string				 m_clockStartTime;
+
 		};
 		
 	public:
