@@ -14,7 +14,6 @@
 #include "environment.h"
 #include "SessionSink.h"
 #include "liveMedia.hh"
-#include "MediaSessionHelper.h"
 #include <string>
 #include <map>
 
@@ -113,7 +112,7 @@ class RTSPConnection
 				RTSPConnection&          m_connection;
 				int                      m_timeout;
 				int                      m_rtptransport;
-				MediaSessionHelper*      m_session;                   
+				MediaSession*      		 m_session;                   
 				MediaSubsession*         m_subSession;             
 				MediaSubsessionIterator* m_subSessionIter;
 				Callback*                m_callback; 	

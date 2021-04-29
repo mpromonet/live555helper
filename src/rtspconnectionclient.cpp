@@ -129,7 +129,10 @@ RTSPConnection::RTSPClientConnection::~RTSPClientConnection()
 				subsession->sink = NULL;
 			}
 		}
-		envir() << " Send Teardown command" << "\n";
+		if (fVerbosityLevel > 1)
+		{
+			envir() << " Send Teardown command" << "\n";
+		}
 		this->sendTeardownCommand(*m_session, continueAfterTEARDOWN);
 		Medium::close(m_session);
 	}
@@ -205,7 +208,6 @@ void RTSPConnection::RTSPClientConnection::sendNextCommand()
 			}
 			if (m_clockStartTime != "") {
 				m_playforinit = 1;
-				m_session->setRangeClockAttribute(m_clockStartTime.c_str(), nullptr);
 				this->sendPlayCommand(*m_session, continueAfterPLAY, m_clockStartTime.c_str());
 			}
 			else if (m_nptStartTime > 0) {
@@ -235,7 +237,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterDESCRIBE(int resultCode,
 		{
 			envir() << "Got SDP:\n" << resultString << "\n";
 		}
-		m_session = MediaSessionHelper::createNew(envir(), resultString);
+		m_session = MediaSession::createNew(envir(), resultString);
 		if (m_session)
 		{
 			m_subSessionIter = new MediaSubsessionIterator(*m_session);
@@ -245,23 +247,24 @@ void RTSPConnection::RTSPClientConnection::continueAfterDESCRIBE(int resultCode,
 		{
 			if (fVerbosityLevel > 1)
 			{
-				envir() << "MediaSessionHelper::createNew() failed! (result string: " << resultString << ")\n";
+				envir() << "MediaSession::createNew() failed! (result string: " << resultString << ")\n";
 			}
-			m_callback->onError(m_connection, "MediaSessionHelper::createNew() failed!");
-		} 
+			m_callback->onError(m_connection, "MediaSession::createNew() failed!");
+		}
 	}
 	delete[] resultString;
 }
 
 void RTSPConnection::RTSPClientConnection::continueAfterSETUP(int resultCode, char* resultString)
 {
-	if (resultCode != 0) 
+	if (resultCode != 0)
 	{
 		envir() << "Failed to SETUP: " << resultString << "\n";
 		m_callback->onError(m_connection, resultString);
 	}
 	else
-	{				
+	{
+		envir() << " Requested URL : " << m_connection.getUrl().c_str() << "\n";
 		MediaSink* sink = SessionSink::createNew(envir(), m_callback);
 		if (sink == NULL) 
 		{
@@ -294,6 +297,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterPLAY(int resultCode, cha
 	{
 		if (m_playforinit > 0)
 		{
+			envir() << "PLAY INIT OK" << "\n";
 			this->sendPauseCommand(*m_session, continueAfterPAUSE);
 		}
 		else {
@@ -319,10 +323,9 @@ void RTSPConnection::RTSPClientConnection::continueAfterPAUSE(int resultCode, ch
 	{
 		if (fVerbosityLevel > 1)
 		{
-			envir() << " continueAfterPAUSE  m_playforinit: " << m_playforinit << "\n";
-			envir() << " continueAfterPAUSE  m_nptStartTime: " << m_nptStartTime << "\n";
-			envir() << " continueAfterPAUSE::m_clockStartTime " << m_clockStartTime.c_str() << "\n";
-			envir() << " continueAfterPAUSE::absStartTime " << m_session->absStartTime() << "**\n";
+			envir() << " continueAfterPAUSE m_playforinit: " << m_playforinit << "\n";
+			envir() << " continueAfterPAUSE m_nptStartTime: " << m_nptStartTime << "\n";
+			envir() << " continueAfterPAUSE m_clockStartTime " << m_clockStartTime.c_str() << "\n";
 		}
 		m_playforinit = 0;
 		if (m_clockStartTime != "") {
@@ -335,15 +338,17 @@ void RTSPConnection::RTSPClientConnection::continueAfterPAUSE(int resultCode, ch
 			this->sendPlayCommand(*m_session, continueAfterPLAY);
 		}
 	}
+	delete[] resultString;
 }
 
 void RTSPConnection::RTSPClientConnection::continueAfterTEARDOWN(int resultCode, char* resultString)
 {
 	if (resultCode != 0)
 	{
-		envir() << "Failed to PLAUSE: " << resultString << "\n";
+		envir() << "Failed to TEARDOWN: " << resultString << "\n";
 		m_callback->onError(m_connection, resultString);
 	}
+	delete[] resultString;
 }
 
 
