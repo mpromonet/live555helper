@@ -26,3 +26,7 @@ if (WIN32)
 else ()
 	add_definitions(-DNO_OPENSSL=1 -DBSD=1 -DSOCKLEN_T=socklen_t -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE=1)
 endif()
+
+SET(CPACK_GENERATOR "TGZ")
+SET(CPACK_PACKAGE_CONTACT "michel.promonet@free.fr")
+INCLUDE(CPack)
