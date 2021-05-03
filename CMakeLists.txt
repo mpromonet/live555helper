@@ -21,7 +21,7 @@ target_include_directories(liblive555helper PUBLIC ${LIVE}/groupsock/include ${L
 target_link_libraries (${PROJECT_NAME} liblive555helper) 
 
 if (WIN32)
-	add_definitions(-DNO_OPENSSL=1 -D_CRT_SECURE_NO_WARNINGS)
+	add_definitions(-DNO_OPENSSL=1 -D_CRT_SECURE_NO_WARNINGS -DNO_GETIFADDRS)
 	target_link_libraries (${PROJECT_NAME} ws2_32)
 else ()
 	add_definitions(-DNO_OPENSSL=1 -DBSD=1 -DSOCKLEN_T=socklen_t -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE=1)
