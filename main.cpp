@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 	{
 		Environment env(stop);
 		std::string url = argv[optind];
-		if (url.find("rtsp://") == 0) {
+		if ( (url.find("rtsp://") == 0) || (url.find("rtsps://") == 0) ) {
 			RTSPCallback cb(output);
 			RTSPConnection rtspClient(env, &cb, url.c_str(), timeout, rtptransport, logLevel);
 			
