@@ -2,8 +2,8 @@ cmake_minimum_required (VERSION 3.0.0)
  
 project (live555helpertest)
 
-set (CMAKE_CXX_STANDARD 17)
-
+set (CMAKE_CXX_STANDARD 20)
+set (DETECT_OPENSSL "ON" CACHE STRING "Detect OPENSSL")
 
 set(LIVE ${CMAKE_BINARY_DIR}/live)
 if (NOT EXISTS ${LIVE})
@@ -28,7 +28,9 @@ else ()
 endif()
 
 # openssl ?
-find_package(OpenSSL QUIET)
+if (DETECT_OPENSSL) 
+    find_package(OpenSSL QUIET)
+endif()
 MESSAGE("OpenSSL_FOUND = ${OpenSSL_FOUND}")
 if (NOT OpenSSL_FOUND)
     target_compile_definitions(liblive555helper PUBLIC NO_OPENSSL=1)
