@@ -10,10 +10,10 @@
 
 #include "SessionSink.h"
 
-SessionSink::SessionSink(UsageEnvironment& env, SessionCallback* callback) 
+SessionSink::SessionSink(UsageEnvironment& env, SessionCallback* callback, size_t bufferSize) 
 	: MediaSink(env)
 	, m_buffer(NULL)
-	, m_bufferSize(0)
+	, m_bufferSize(bufferSize)
 	, m_callback(callback) 
 	, m_markerSize(0)
 {
@@ -31,7 +31,6 @@ void SessionSink::allocate(ssize_t bufferSize)
 	if (m_callback)
 	{
 		m_markerSize = m_callback->onNewBuffer(this->name(), this->source()->MIMEtype(), m_buffer, m_bufferSize);
-		envir() << "markerSize:" << (int)m_markerSize << "\n";
 	}
 }
 
@@ -58,10 +57,10 @@ Boolean SessionSink::continuePlaying()
 {
 	if (m_buffer == NULL) 
 	{
-		allocate(1024*1024);
+		allocate(m_bufferSize);
 	}
 	Boolean ret = False;
-	if (source() != NULL)
+	if ( (m_buffer != NULL) && (source() != NULL) )
 	{
 		source()->getNextFrame(m_buffer+m_markerSize, m_bufferSize-m_markerSize,
 				afterGettingFrame, this,

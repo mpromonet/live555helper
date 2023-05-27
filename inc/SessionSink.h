@@ -44,10 +44,10 @@ class SessionCallback
 class SessionSink: public MediaSink 
 {
 	public:
-		static SessionSink* createNew(UsageEnvironment& env, SessionCallback* callback) { return new SessionSink(env, callback); }
+		static SessionSink* createNew(UsageEnvironment& env, SessionCallback* callback, size_t bufferSize = 2*1024*1024) { return new SessionSink(env, callback, bufferSize); }
 
 	private:
-		SessionSink(UsageEnvironment& env, SessionCallback* callback);
+		SessionSink(UsageEnvironment& env, SessionCallback* callback, size_t bufferSize);
 		virtual ~SessionSink();
 
 		void allocate(ssize_t bufferSize);
