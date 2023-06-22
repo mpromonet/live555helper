@@ -22,9 +22,9 @@ if (WIN32)
 	target_compile_definitions(liblive555helper PUBLIC _CRT_SECURE_NO_WARNINGS=1 NO_GETIFADDRS=1)
 	target_link_libraries (liblive555helper ws2_32)
 elseif (APPLE)
-	target_compile_definitions(liblive555helper PUBLIC BSD=1 SOCKLEN_T=socklen_t _FILE_OFFSET_BITS=64 _LARGEFILE_SOURCE=1 NEED_XLOCALE_H=1)
+	target_compile_definitions(liblive555helper PUBLIC BSD=1 SOCKLEN_T=socklen_t _FILE_OFFSET_BITS=64 _LARGEFILE_SOURCE=1 NO_STD_LIB=1 NEED_XLOCALE_H=1)
 else ()
-	target_compile_definitions(liblive555helper PUBLIC BSD=1 SOCKLEN_T=socklen_t _FILE_OFFSET_BITS=64 _LARGEFILE_SOURCE=1)
+	target_compile_definitions(liblive555helper PUBLIC BSD=1 SOCKLEN_T=socklen_t _FILE_OFFSET_BITS=64 _LARGEFILE_SOURCE=1 NO_STD_LIB=1)
 endif()
 
 # openssl ?
