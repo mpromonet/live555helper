@@ -167,6 +167,10 @@ void RTSPConnection::RTSPClientConnection::setNptstartTime()
 
 	std::string startTimeValue = getParamValue(urlStr, "starttime");
 	if (!startTimeValue.empty()) {
+		size_t pos = startTimeValue.find('&');
+		if (pos != std::string::npos) {
+			startTimeValue = startTimeValue.substr(0, pos);
+		}		
 		m_clockStartTime = startTimeValue;
 	}
 }
