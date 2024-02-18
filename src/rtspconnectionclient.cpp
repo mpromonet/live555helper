@@ -138,6 +138,15 @@ RTSPConnection::RTSPClientConnection::~RTSPClientConnection()
 	}
 }
 
+std::string getParamValue(const std::string& url, const std::string& param) {
+    std::string value;
+    size_t pos = url.find(param + "=");
+    if (pos != std::string::npos) {
+        value = url.substr(pos + param.size() + 1);
+    }
+    return value;
+}
+
 /// <summary>
 /// Get params npttime or starttime from a query string 
 /// urlStr rtsp://192.168.31.124:554/camera02?npttime=74652
@@ -148,23 +157,17 @@ void RTSPConnection::RTSPClientConnection::setNptstartTime()
 {
 	m_nptStartTime = 0;
 	m_playforinit = 0;
+	m_clockStartTime = "";
 	std::string urlStr = m_connection.getUrl();
-	std::istringstream is(urlStr);
-	std::map<std::string, std::string> opts;
-	std::string key, value, querystring;
-	while (std::getline(std::getline(std::getline(is, querystring, '?'), key, '='), value, '&'))
-	{
-		opts[key] = value;
+	
+	std::string nptTimeValue = getParamValue(urlStr, "ntptime");
+	if (!nptTimeValue.empty()) {
+		m_nptStartTime = std::stod(nptTimeValue);
 	}
 
-	if (opts.count("npttime") > 0)
-	{
-		m_nptStartTime = std::stod(opts.at("npttime"));
-	}
-	
-	if (opts.find("starttime") != opts.end())
-	{
-		m_clockStartTime = opts["starttime"];
+	std::string startTimeValue = getParamValue(urlStr, "starttime");
+	if (!startTimeValue.empty()) {
+		m_clockStartTime = startTimeValue;
 	}
 }
 
@@ -264,7 +267,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterSETUP(int resultCode, ch
 	}
 	else
 	{
-		envir() << " Requested URL : " << m_connection.getUrl().c_str() << "\n";
+		envir() << "Requested URL : " << m_connection.getUrl().c_str() << "\n";
 		MediaSink* sink = SessionSink::createNew(envir(), m_callback);
 		if (sink == NULL) 
 		{
@@ -321,17 +324,13 @@ void RTSPConnection::RTSPClientConnection::continueAfterPAUSE(int resultCode, ch
 	}
 	else if (m_playforinit > 0)
 	{
-		if (fVerbosityLevel > 1)
-		{
-			envir() << " continueAfterPAUSE m_playforinit: " << m_playforinit << "\n";
-			envir() << " continueAfterPAUSE m_nptStartTime: " << m_nptStartTime << "\n";
-			envir() << " continueAfterPAUSE m_clockStartTime " << m_clockStartTime.c_str() << "\n";
-		}
 		m_playforinit = 0;
 		if (m_clockStartTime != "") {
+			envir() << " continueAfterPAUSE m_clockStartTime " << m_clockStartTime.c_str() << "\n";
 			this->sendPlayCommand(*m_session, continueAfterPLAY, m_clockStartTime.c_str());
 		}
 		else if (m_nptStartTime > 0) {
+			envir() << " continueAfterPAUSE m_nptStartTime: " << m_nptStartTime << "\n";
 			this->sendPlayCommand(*m_session, continueAfterPLAY, m_nptStartTime);
 		}
 		else {
