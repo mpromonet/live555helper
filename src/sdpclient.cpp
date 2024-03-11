@@ -33,7 +33,7 @@ SDPClient::SDPClient(Environment& env, Callback* callback, const char* sdp, cons
 					m_env << "Failed to create sink for \"" << subsession->mediumName() << "/" << subsession->codecName() << "\" subsession error: " << m_env.getResultMsg() << "\n";
 					m_callback->onError(*this, m_env.getResultMsg());			
 				} 
-				else if (m_callback->onNewSession(sink->name(), subsession->mediumName(), subsession->codecName(), subsession->savedSDPLines())) 
+				else if (m_callback->onNewSession(sink->name(), subsession->mediumName(), subsession->codecName(), subsession->savedSDPLines(), subsession->rtpTimestampFrequency(), subsession->numChannels())) 
 				{
 					m_env << "Start playing sink for \"" << subsession->mediumName() << "/" << subsession->codecName() << "\" subsession" << "\n";
 					subsession->sink = sink;

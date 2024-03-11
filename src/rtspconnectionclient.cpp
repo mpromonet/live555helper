@@ -278,7 +278,7 @@ void RTSPConnection::RTSPClientConnection::continueAfterSETUP(int resultCode, ch
 			envir() << "Failed to create sink for \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession error: " << envir().getResultMsg() << "\n";
 			m_callback->onError(m_connection, envir().getResultMsg());			
 		} 
-		else if (m_callback->onNewSession(sink->name(), m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines())) 
+		else if (m_callback->onNewSession(sink->name(), m_subSession->mediumName(), m_subSession->codecName(), m_subSession->savedSDPLines(), m_subSession->rtpTimestampFrequency(), m_subSession->numChannels())) 
 		{
 			envir() << "Start playing sink for \"" << m_subSession->mediumName() << "/" << m_subSession->codecName() << "\" subsession" << "\n";
 			m_subSession->sink = sink;

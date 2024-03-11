@@ -54,7 +54,7 @@ void MKVClient::onMatroskaFileCreation(MatroskaFile* newFile) {
 				m_env << "Failed to create sink for \"" << track->mimeType << "\" subsession error: " << m_env.getResultMsg() << "\n";
 				m_callback->onError(*this, m_env.getResultMsg());			
 			} 
-			else if (m_callback->onNewSession(sink->name(), media.c_str(), codec.c_str(), sdp.c_str())) 
+			else if (m_callback->onNewSession(sink->name(), media.c_str(), codec.c_str(), sdp.c_str(), rtpsink->rtpTimestampFrequency(), rtpsink->numChannels()))
 			{
 				m_env << "Start playing sink for \"" << track->mimeType << "\" sdp:" << sdp.c_str() << "\n";
 				sink->startPlaying(*trackSource, onEndOfFile, this);	  

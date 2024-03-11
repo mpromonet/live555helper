@@ -23,7 +23,7 @@ class SessionCallback
 {
 		
 	public:
-		virtual bool    onNewSession(const char* id, const char* media, const char* codec, const char* sdp) { return true; }
+		virtual bool    onNewSession(const char* id, const char* media, const char* codec, const char* sdp, unsigned int rtpfrequency, unsigned int channels) { return true; }
 		virtual bool    onData(const char* id, unsigned char* buffer, ssize_t size, struct timeval presentationTime) = 0;
 		virtual ssize_t onNewBuffer(const char* id, const char* mime, unsigned char* buffer, ssize_t size)  { 
 			ssize_t markerSize = 0;
