@@ -129,6 +129,7 @@ class RTSPConnection
 		virtual ~RTSPConnection();
 
 		void        start(unsigned int delay = 0);
+		void		stop();
 		std::string getUrl()          { return m_url; }
 		int         getRtpTransport() { return m_rtptransport; }
 

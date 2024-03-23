@@ -24,6 +24,7 @@ A simple RTSP client could be implement with :
 		Environment env;
 		MyCallback cb;
 		RTSPConnection rtspClient(env, &cb, "rtsp://pi2.local:8554/unicast");
+		rtspClient.start();
 		env.mainloop();
 		return 0;
 	}

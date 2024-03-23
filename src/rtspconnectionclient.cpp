@@ -26,7 +26,6 @@ RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char*
 				, m_verbosity(verbosityLevel)
 				, m_rtspClient(NULL)
 {
-	this->start();
 }
 
 RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, const std::map<std::string,std::string> & opts, int verbosityLevel) 
@@ -39,7 +38,6 @@ RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char*
 				, m_verbosity(verbosityLevel)
 				, m_rtspClient(NULL)
 {
-	this->start();
 }
 
 void RTSPConnection::start(unsigned int delay)
@@ -51,20 +49,22 @@ void RTSPConnection::start(unsigned int delay)
 }	
 
 void RTSPConnection::TaskstartCallback() 
-{
-	if (m_rtspClient)
-	{
-		
-		Medium::close(m_rtspClient);
-	}
-	
+{		
+	Medium::close(m_rtspClient);	
 	m_rtspClient = new RTSPClientConnection(*this, m_env, m_callback, m_url.c_str(), m_timeout, m_rtptransport, m_verbosity);	
+}
+
+void RTSPConnection::stop()
+{
+	if (m_startCallbackTask) {
+		m_env.taskScheduler().unscheduleDelayedTask(m_startCallbackTask);
+	}	
+	Medium::close(m_rtspClient);
 }
 
 RTSPConnection::~RTSPConnection()
 {
-	m_env.taskScheduler().unscheduleDelayedTask(m_startCallbackTask);
-	Medium::close(m_rtspClient);
+	stop();
 }
 
 int getHttpTunnelPort(int  rtptransport, const char* rtspURL) 

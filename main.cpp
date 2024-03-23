@@ -177,6 +177,7 @@ int main(int argc, char *argv[])
 		if ( (url.find("rtsp://") == 0) || (url.find("rtsps://") == 0) ) {
 			RTSPCallback cb(output);
 			RTSPConnection rtspClient(env, &cb, url.c_str(), timeout, rtptransport, logLevel);
+			rtspClient.start();
 			
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;
