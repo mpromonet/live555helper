@@ -42,9 +42,7 @@ RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char*
 
 void RTSPConnection::start(unsigned int delay)
 {
-	if (m_startCallbackTask) {
-		m_env.taskScheduler().unscheduleDelayedTask(m_startCallbackTask);
-	}
+	m_env.taskScheduler().unscheduleDelayedTask(m_startCallbackTask);
 	m_startCallbackTask = m_env.taskScheduler().scheduleDelayedTask(delay*1000000, TaskstartCallback, this);
 }	
 
@@ -56,9 +54,7 @@ void RTSPConnection::TaskstartCallback()
 
 void RTSPConnection::stop()
 {
-	if (m_startCallbackTask) {
-		m_env.taskScheduler().unscheduleDelayedTask(m_startCallbackTask);
-	}	
+	m_env.taskScheduler().unscheduleDelayedTask(m_startCallbackTask);
 	Medium::close(m_rtspClient);
 }
 
