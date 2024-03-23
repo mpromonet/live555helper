@@ -65,6 +65,7 @@ void RTSPConnection::stop()
 void RTSPConnection::TaskstopCallback() 
 {		
 	Medium::close(m_rtspClient);
+	m_rtspClient = NULL;
 }
 
 RTSPConnection::~RTSPConnection()
@@ -79,20 +80,20 @@ int getHttpTunnelPort(int  rtptransport, const char* rtspURL)
 	if (rtptransport == RTSPConnection::RTPOVERHTTP) 
 	{
 		std::string url = rtspURL;
-                const char * pattern = "://";
-                std::size_t pos = url.find(pattern);
-                if (pos != std::string::npos) {
-                        url.erase(0,pos+strlen(pattern));
-                }
-                pos = url.find_first_of("/");
-                if (pos != std::string::npos) {
-                        url.erase(pos);
-                }
-                pos = url.find_first_of(":");
-                if (pos != std::string::npos) {
+		const char * pattern = "://";
+		std::size_t pos = url.find(pattern);
+		if (pos != std::string::npos) {
+			url.erase(0,pos+strlen(pattern));
+		}
+		pos = url.find_first_of("/");
+		if (pos != std::string::npos) {
+			url.erase(pos);
+		}
+		pos = url.find_first_of(":");
+		if (pos != std::string::npos) {
 			url.erase(0,pos+1);
-                        httpTunnelPort = std::stoi(url);
-                }
+			httpTunnelPort = std::stoi(url);
+		}
 	}
 	return httpTunnelPort;
 }

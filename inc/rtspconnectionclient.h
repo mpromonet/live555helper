@@ -130,8 +130,8 @@ class RTSPConnection
 
 		void        start(unsigned int delay = 0);
 		void		stop();
-		std::string getUrl()          { return m_url; }
-		int         getRtpTransport() { return m_rtptransport; }
+		std::string getUrl() const          { return m_url; }
+		int         getRtpTransport() const { return m_rtptransport; }
 
 	protected:
 		TASK_CALLBACK(RTSPConnection,startCallback);
