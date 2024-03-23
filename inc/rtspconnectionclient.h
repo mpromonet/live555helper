@@ -135,6 +135,7 @@ class RTSPConnection
 
 	protected:
 		TASK_CALLBACK(RTSPConnection,startCallback);
+		TASK_CALLBACK(RTSPConnection,stopCallback);
 	
 	protected:
 		Environment&             m_env;
