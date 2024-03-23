@@ -93,6 +93,8 @@ int getHttpTunnelPort(int  rtptransport, const char* rtspURL)
 		
 RTSPConnection::RTSPClientConnection::RTSPClientConnection(RTSPConnection& connection, Environment& env, Callback* callback, const char* rtspURL, int timeout, int  rtptransport, int verbosityLevel) 
 				: RTSPClientConstrutor(env, rtspURL, verbosityLevel, NULL, getHttpTunnelPort(rtptransport, rtspURL))
+				, m_ConnectionTimeoutTask(NULL)
+				, m_DataArrivalTimeoutTask(NULL)
 				, m_connection(connection)
 				, m_timeout(timeout)
 				, m_rtptransport(rtptransport)
