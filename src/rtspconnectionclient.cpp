@@ -16,19 +16,6 @@
 #include <sstream>
 
 
-RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout, int rtptransport, int verbosityLevel) 
-				: m_startCallbackTask(NULL)
-				, m_stopCallbackTask(NULL)
-				, m_env(env)
-				, m_callback(callback)
-				, m_url(rtspURL)
-				, m_timeout(timeout)
-				, m_rtptransport(rtptransport)
-				, m_verbosity(verbosityLevel)
-				, m_rtspClient(NULL)
-{
-}
-
 RTSPConnection::RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, const std::map<std::string,std::string> & opts, int verbosityLevel) 
 				: m_startCallbackTask(NULL)
 				, m_stopCallbackTask(NULL)
@@ -93,7 +80,7 @@ int getHttpTunnelPort(int  rtptransport, const char* rtspURL)
 		if (pos != std::string::npos) {
 			url.erase(0,pos+1);
 			httpTunnelPort = std::stoi(url);
-		}
+        }
 	}
 	return httpTunnelPort;
 }
@@ -165,7 +152,6 @@ std::string getParamValue(const std::string& url, const std::string& param) {
 void RTSPConnection::RTSPClientConnection::setNptstartTime()
 {
 	m_nptStartTime = 0;
-	m_playforinit = 0;
 	m_clockStartTime = "";
 	std::string urlStr = m_connection.getUrl();
 	
@@ -223,15 +209,12 @@ void RTSPConnection::RTSPClientConnection::sendNextCommand()
 				envir() << " clockstarttime is given read video from it :: m_clockStartTime " << m_clockStartTime.c_str() << "\n";
 			}
 			if (m_clockStartTime != "") {
-				m_playforinit = 1;
 				this->sendPlayCommand(*m_session, continueAfterPLAY, m_clockStartTime.c_str());
 			}
 			else if (m_nptStartTime > 0) {
-				m_playforinit = 1;
 				this->sendPlayCommand(*m_session, continueAfterPLAY, m_nptStartTime);
 			}
 			else {
-				m_playforinit = 0;
 				this->sendPlayCommand(*m_session, continueAfterPLAY);
 			}
 		}
@@ -311,45 +294,13 @@ void RTSPConnection::RTSPClientConnection::continueAfterPLAY(int resultCode, cha
 	}
 	else
 	{
-		if (m_playforinit > 0)
+		if (fVerbosityLevel > 1) 
 		{
-			envir() << "PLAY INIT OK" << "\n";
-			this->sendPauseCommand(*m_session, continueAfterPAUSE);
+			envir() << "PLAY OK" << "\n";
 		}
-		else {
-			if (fVerbosityLevel > 1) 
-			{
-				envir() << "PLAY OK" << "\n";
-			}
-			m_DataArrivalTimeoutTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
-		}
+		m_DataArrivalTimeoutTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
 	}
 	envir().taskScheduler().unscheduleDelayedTask(m_ConnectionTimeoutTask);
-	delete[] resultString;
-}
-
-void RTSPConnection::RTSPClientConnection::continueAfterPAUSE(int resultCode, char* resultString)
-{
-	if (resultCode != 0)
-	{
-		envir() << "Failed to PLAUSE: " << resultString << "\n";
-		m_callback->onError(m_connection, resultString);
-	}
-	else if (m_playforinit > 0)
-	{
-		m_playforinit = 0;
-		if (m_clockStartTime != "") {
-			envir() << " continueAfterPAUSE m_clockStartTime " << m_clockStartTime.c_str() << "\n";
-			this->sendPlayCommand(*m_session, continueAfterPLAY, m_clockStartTime.c_str());
-		}
-		else if (m_nptStartTime > 0) {
-			envir() << " continueAfterPAUSE m_nptStartTime: " << m_nptStartTime << "\n";
-			this->sendPlayCommand(*m_session, continueAfterPLAY, m_nptStartTime);
-		}
-		else {
-			this->sendPlayCommand(*m_session, continueAfterPLAY);
-		}
-	}
 	delete[] resultString;
 }
 

@@ -148,9 +148,10 @@ int main(int argc, char *argv[])
 {
 	// default value
 	int  timeout = 10;
-	int rtptransport = RTSPConnection::RTPUDPUNICAST;
+	std::string rtptransport = "udp";
 	int  logLevel = 255;
 	std::string output;
+	std::map<std::string,std::string> opts;
 	
 	// decode args
 	int c = 0;
@@ -164,11 +165,13 @@ int main(int argc, char *argv[])
 			case 't':	timeout= atoi(optarg);  break;
 			case 'o':	output = optarg;  break;
 			
-			case 'M':	rtptransport = RTSPConnection::RTPUDPMULTICAST;  break;
-			case 'T':	rtptransport = RTSPConnection::RTPOVERTCP;  break;
-			case 'H':	rtptransport = RTSPConnection::RTPOVERHTTP;  break;
+			case 'M':	rtptransport = "multicast";  break;
+			case 'T':	rtptransport = "tcp"      ;  break;
+			case 'H':	rtptransport = "http"     ;  break;
 		}
 	}
+	opts["timeout"] = std::to_string(timeout);
+	opts["rtptransport"] = rtptransport;
 	
 	if (optind<argc)
 	{
@@ -176,8 +179,7 @@ int main(int argc, char *argv[])
 		std::string url = argv[optind];
 		if ( (url.find("rtsp://") == 0) || (url.find("rtsps://") == 0) ) {
 			RTSPCallback cb(output);
-			RTSPConnection rtspClient(env, &cb, url.c_str(), timeout, rtptransport, logLevel);
-			rtspClient.start();
+			RTSPConnection rtspClient(env, &cb, url.c_str(), opts, logLevel);
 			
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;

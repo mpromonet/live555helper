@@ -102,7 +102,6 @@ class RTSPConnection
 				RTSP_CALLBACK(DESCRIBE, resultCode, resultString);
 				RTSP_CALLBACK(SETUP, resultCode, resultString);
 				RTSP_CALLBACK(PLAY, resultCode, resultString);
-				RTSP_CALLBACK(PAUSE, resultCode, resultString);
 				RTSP_CALLBACK(TEARDOWN, resultCode, resultString);
 			
 				TASK_CALLBACK(RTSPConnection::RTSPClientConnection,ConnectionTimeout);
@@ -117,15 +116,13 @@ class RTSPConnection
 				MediaSubsessionIterator* m_subSessionIter;
 				Callback*                m_callback; 	
 				unsigned int             m_nbPacket;
-				int						 m_playforinit;
 				double					 m_nptStartTime;
 				std::string				 m_clockStartTime;
 
 		};
 		
 	public:
-		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, const std::map<std::string,std::string> & opts, int verbosityLevel = 1);
-		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, int timeout = 5, int rtptransport = RTPUDPUNICAST, int verbosityLevel = 1);
+		RTSPConnection(Environment& env, Callback* callback, const char* rtspURL, const std::map<std::string,std::string> & opts = std::map<std::string,std::string>(), int verbosityLevel = 1);
 		virtual ~RTSPConnection();
 
 		void        start(unsigned int delay = 0);
