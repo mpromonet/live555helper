@@ -38,6 +38,7 @@ class MKVClient
 		MKVClient(Environment& env, Callback* callback, const char* path, const std::map<std::string,std::string> & opts, int verbosityLevel=1);
 		virtual ~MKVClient();
 
+		void start() {};
 		void stop() {
 			m_env.stop();
 		}

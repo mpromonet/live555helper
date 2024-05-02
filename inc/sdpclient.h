@@ -59,6 +59,8 @@ class SDPClient
 	public:
 		SDPClient(Environment& env, Callback* callback, const char* SDP, const std::map<std::string,std::string> & opts, int verbosityLevel=1);
 		virtual ~SDPClient();
+
+		void start() {};
 	
 	protected:
 		Environment&             m_env;
