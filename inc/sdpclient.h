@@ -61,6 +61,7 @@ class SDPClient
 		virtual ~SDPClient();
 
 		void start() {};
+		void stop() {};
 	
 	protected:
 		Environment&             m_env;
