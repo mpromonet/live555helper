@@ -20,7 +20,7 @@ add_library (liblive555helper STATIC ${LIVEHELPERSOURCE})
 target_include_directories(liblive555helper PUBLIC ${LIVE}/groupsock/include ${LIVE}/liveMedia/include ${LIVE}/UsageEnvironment/include ${LIVE}/BasicUsageEnvironment/include inc)
 
 if (WIN32)
-	target_compile_definitions(liblive555helper PUBLIC _CRT_SECURE_NO_WARNINGS=1 NO_GETIFADDRS=1)
+	target_compile_definitions(liblive555helper PUBLIC _CRT_SECURE_NO_WARNINGS=1 NO_GETIFADDRS=1 NO_STD_LIB=1)
 	target_link_libraries (liblive555helper PUBLIC ws2_32)
 elseif (APPLE)
 	target_compile_definitions(liblive555helper PUBLIC BSD=1 SOCKLEN_T=socklen_t _FILE_OFFSET_BITS=64 _LARGEFILE_SOURCE=1 NO_STD_LIB=1 NEED_XLOCALE_H=1)
