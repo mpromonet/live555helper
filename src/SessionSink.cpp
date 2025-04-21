@@ -21,6 +21,7 @@ SessionSink::SessionSink(UsageEnvironment& env, SessionCallback* callback, size_
 
 SessionSink::~SessionSink()
 {
+	m_callback->onCloseSession(this->name());
 	delete [] m_buffer;
 }
 
