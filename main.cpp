@@ -141,7 +141,22 @@ void sig_handler(int signo)
 }
 
 void usage(const char* app) {
-	std::cout << "Usage: " << app << " url" << std::endl;
+	std::cout << "Usage: " << app << " [options] <url>" << std::endl;
+    std::cout << "Options:" << std::endl;
+    std::cout << "  -h               Show this help message and exit" << std::endl;
+    std::cout << "  -v <level>       Set verbosity level (default: 255)" << std::endl;
+    std::cout << "  -t <timeout>     Set timeout in seconds (default: 10)" << std::endl;
+    std::cout << "  -o <output>      Set output file prefix for saving media data" << std::endl;
+    std::cout << "  -M               Use multicast RTP transport" << std::endl;
+    std::cout << "  -T               Use TCP RTP transport" << std::endl;
+    std::cout << "  -H               Use HTTP RTP transport" << std::endl;
+    std::cout << "Arguments:" << std::endl;
+    std::cout << "  <url>            RTSP, RTSPS, file, or RTP URL to stream or process" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Examples:" << std::endl;
+    std::cout << "  " << app << " -v 1 -t 20 -o output rtsp://example.com/stream" << std::endl;
+    std::cout << "  " << app << " -M file://example.mkv" << std::endl;
+
 }
 
 int main(int argc, char *argv[])
@@ -180,6 +195,7 @@ int main(int argc, char *argv[])
 		if ( (url.find("rtsp://") == 0) || (url.find("rtsps://") == 0) ) {
 			RTSPCallback cb(output);
 			RTSPConnection rtspClient(env, &cb, url.c_str(), opts, logLevel);
+			rtspClient.start();
 			
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;

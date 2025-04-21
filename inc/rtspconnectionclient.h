@@ -99,6 +99,7 @@ class RTSPConnection
 				void sendNextCommand(); 
 				void setNptstartTime();
 
+				RTSP_CALLBACK(OPTIONS, resultCode, resultString);
 				RTSP_CALLBACK(DESCRIBE, resultCode, resultString);
 				RTSP_CALLBACK(SETUP, resultCode, resultString);
 				RTSP_CALLBACK(PLAY, resultCode, resultString);
@@ -106,6 +107,7 @@ class RTSPConnection
 			
 				TASK_CALLBACK(RTSPConnection::RTSPClientConnection,ConnectionTimeout);
 				TASK_CALLBACK(RTSPConnection::RTSPClientConnection,DataArrivalTimeout);
+				TASK_CALLBACK(RTSPConnection::RTSPClientConnection, KeepAlive);
 				
 			protected:
 				RTSPConnection&          m_connection;
@@ -118,6 +120,7 @@ class RTSPConnection
 				unsigned int             m_nbPacket;
 				double					 m_nptStartTime;
 				std::string				 m_clockStartTime;
+				bool                     m_getparameterSupported;
 
 		};
 		

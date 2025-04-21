@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "cppdbg",
+        "request": "launch",
+        "name": "Launch live555helpertest",
+        "program": "${workspaceFolder}/live555helpertest",
+        "args": ["-T", "rtsp://77.110.228.219/axis-media/media.amp"],
+        "cwd": "${workspaceFolder}",
+        "stopAtEntry": false,
+        "environment": [],
+        "externalConsole": false
+      }
+    ]
+  }

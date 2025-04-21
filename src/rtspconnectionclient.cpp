@@ -96,18 +96,24 @@ RTSPConnection::RTSPClientConnection::RTSPClientConnection(RTSPConnection& conne
 				, m_subSessionIter(NULL)
 				, m_callback(callback)
 				, m_nbPacket(0)
+				, m_nptStartTime(0)
+				, m_clockStartTime("")
+				, m_subSession(NULL)
+				, m_KeepAliveTask(NULL)
+				, m_getparameterSupported(false)
 {
 	// start tasks
 	m_ConnectionTimeoutTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskConnectionTimeout, this);
 	
 	// initiate connection process
-	this->sendNextCommand();
+	this->sendOptionsCommand(continueAfterOPTIONS);
 }
 
 RTSPConnection::RTSPClientConnection::~RTSPClientConnection()
 {
 	envir().taskScheduler().unscheduleDelayedTask(m_ConnectionTimeoutTask);
 	envir().taskScheduler().unscheduleDelayedTask(m_DataArrivalTimeoutTask);
+    envir().taskScheduler().unscheduleDelayedTask(m_KeepAliveTask); 
 	
 	delete m_subSessionIter;
 	
@@ -170,6 +176,36 @@ void RTSPConnection::RTSPClientConnection::setNptstartTime()
 	}
 }
 
+
+void RTSPConnection::RTSPClientConnection::continueAfterOPTIONS(int resultCode, char* resultString)
+{
+    if (resultCode != 0) 
+    {
+        envir() << "Failed to send OPTIONS: " << resultString << "\n";
+        m_callback->onError(m_connection, resultString);
+    }
+    else
+    {
+        if (fVerbosityLevel > 1) 
+        {
+            envir() << "OPTIONS OK: " << resultString << "\n";
+        }
+
+        std::string options(resultString);
+        if (options.find("GET_PARAMETER") != std::string::npos) 
+        {
+            envir() << "GET_PARAMETER is supported by the server.\n";
+			m_getparameterSupported = true;
+		}
+		else 
+		{
+			envir() << "GET_PARAMETER is NOT supported by the server.\n";
+        }
+				
+        this->sendNextCommand();
+    }
+    delete[] resultString;
+}
 
 void RTSPConnection::RTSPClientConnection::sendNextCommand() 
 {
@@ -299,6 +335,9 @@ void RTSPConnection::RTSPClientConnection::continueAfterPLAY(int resultCode, cha
 			envir() << "PLAY OK" << "\n";
 		}
 		m_DataArrivalTimeoutTask = envir().taskScheduler().scheduleDelayedTask(m_timeout*1000000, TaskDataArrivalTimeout, this);
+		if (m_getparameterSupported) {
+			m_KeepAliveTask = envir().taskScheduler().scheduleDelayedTask(m_timeout * 1000000, TaskKeepAlive, this);
+		}
 	}
 	envir().taskScheduler().unscheduleDelayedTask(m_ConnectionTimeoutTask);
 	delete[] resultString;
@@ -319,7 +358,13 @@ void RTSPConnection::RTSPClientConnection::TaskConnectionTimeout()
 {
 	m_callback->onConnectionTimeout(m_connection);
 }
-		
+	
+void RTSPConnection::RTSPClientConnection::TaskKeepAlive() {
+	envir() << "RTSP keep alive\n";	
+    this->sendGetParameterCommand(*m_session, NULL, NULL);
+    m_KeepAliveTask = envir().taskScheduler().scheduleDelayedTask(m_timeout * 500000, TaskKeepAlive, this);
+}
+
 void RTSPConnection::RTSPClientConnection::TaskDataArrivalTimeout()
 {
 	unsigned int newTotNumPacketsReceived = 0;
