@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - name: cmake
-      run: cmake -G "Unix Makefile" .
+      run: cmake -G "Unix Makefiles" .
     - name: make
       shell: cmd
       run: | 
