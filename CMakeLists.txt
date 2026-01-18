@@ -5,6 +5,11 @@ project (live555helpertest)
 set (CMAKE_CXX_STANDARD 20)
 set (DETECT_OPENSSL "ON" CACHE STRING "Detect OPENSSL")
 
+find_package(Git)
+if(GIT_FOUND)
+    EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} submodule update --init)
+endif()
+
 set(LIVE ${CMAKE_BINARY_DIR}/live)
 if (NOT EXISTS ${LIVE})
     file (DOWNLOAD https://download.live555.com/live555-latest.tar.gz ${CMAKE_BINARY_DIR}/live555.tar.gz STATUS LIVE555_DL_STATUS)
