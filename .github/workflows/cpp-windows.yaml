@@ -10,9 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - name: cmake
-      run: cmake -G "Unix Makefiles" .
+      run: cmake -G Ninja .
     - name: make
       shell: cmd
-      run: make
+      run: ninja
     - name: cpack
       run: cpack
