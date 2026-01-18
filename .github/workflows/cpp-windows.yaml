@@ -1,4 +1,4 @@
-name: C/C++ CI windwos
+name: C/C++ CI windows
 
 on: [push]
 
@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - name: cmake
-      run: cmake .
+      run: cmake -G "Unix Makefile" .
     - name: make
       shell: cmd
       run: | 
