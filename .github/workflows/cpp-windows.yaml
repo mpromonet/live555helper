@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: C/C++ CI windwos
 
 on: [push]
 
@@ -12,6 +12,9 @@ jobs:
     - name: cmake
       run: cmake .
     - name: make
-      run: make
+      shell: cmd
+      run: | 
+          type Makefile
+          make
     - name: cpack
       run: cpack
