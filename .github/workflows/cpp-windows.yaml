@@ -13,8 +13,6 @@ jobs:
       run: cmake -G "Unix Makefiles" .
     - name: make
       shell: cmd
-      run: | 
-          type Makefile
-          make
+      run: make
     - name: cpack
       run: cpack
