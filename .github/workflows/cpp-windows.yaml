@@ -1,0 +1,17 @@
+name: C/C++ CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v5
+    - name: cmake
+      run: cmake .
+    - name: make
+      run: make
+    - name: cpack
+      run: cpack
