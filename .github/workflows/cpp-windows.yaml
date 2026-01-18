@@ -10,9 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - name: cmake
-      run: cmake -G Ninja .
+      run: cmake .
     - name: make
       shell: cmd
-      run: ninja
+      run: cmake --build .
     - name: cpack
       run: cpack
