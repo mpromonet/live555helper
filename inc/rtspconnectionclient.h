@@ -84,6 +84,7 @@ class RTSPConnection
 				virtual void    onError(RTSPConnection&, const char*)  {}
 				virtual void    onConnectionTimeout(RTSPConnection&)   {}
 				virtual void    onDataTimeout(RTSPConnection&)         {}
+				virtual void    onEndOfFile(RTSPConnection&)           {}			
 		};
 	
 		/* ---------------------------------------------------------------------------

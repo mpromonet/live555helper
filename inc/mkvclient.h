@@ -31,6 +31,8 @@ class MKVClient
 		{
 			public:
 				virtual void    onError(MKVClient&, const char*)  {}
+				virtual void    onConnectionTimeout(MKVClient&)   {}
+				virtual void    onDataTimeout(MKVClient&)         {}				
 				virtual void    onEndOfFile(MKVClient& client)  { client.stop(); }
 		};
 			
@@ -55,6 +57,7 @@ class MKVClient
 		
 	protected:
 		Environment&             m_env;
+		std::string              m_url;
 		Callback*                m_callback; 	
 		MatroskaFile*            m_mkvfile; 
 		MatroskaDemux*	         m_demux;

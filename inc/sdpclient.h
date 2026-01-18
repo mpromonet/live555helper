@@ -54,6 +54,9 @@ class SDPClient
 		{
 			public:
 				virtual void    onError(SDPClient&, const char*)  {}
+				virtual void    onConnectionTimeout(SDPClient&)   {}
+				virtual void    onDataTimeout(SDPClient&)         {}
+				virtual void    onEndOfFile(SDPClient&)           {}			
 		};
 			
 	public:
