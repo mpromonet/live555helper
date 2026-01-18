@@ -13,6 +13,7 @@
 #include <sstream>
 #include <map>
 #include <signal.h>
+#include <cxxopts.hpp>
 #include "environment.h"
 #include "rtspconnectionclient.h"
 #include "sdpclient.h"
@@ -167,68 +168,91 @@ int main(int argc, char *argv[])
 	int  logLevel = 255;
 	std::string output;
 	std::map<std::string,std::string> opts;
-	
-	// decode args
-	int c = 0;
-	while ((c = getopt (argc, argv, "hv:" "t:o:" "MTH")) != -1)
-	{
-		switch (c)
-		{
-			case 'v':	logLevel   = atoi(optarg);  break;
-			case 'h':	usage(argv[0]);  return 0;
-			
-			case 't':	timeout= atoi(optarg);  break;
-			case 'o':	output = optarg;  break;
-			
-			case 'M':	rtptransport = "multicast";  break;
-			case 'T':	rtptransport = "tcp"      ;  break;
-			case 'H':	rtptransport = "http"     ;  break;
+
+	// decode args with cxxopts
+	try {
+		cxxopts::Options options(argv[0], "Simple Test Using live555helper");
+		options.positional_help("<url>");
+		options.add_options()
+			("h,help", "Show help")
+			("v,verbose", "Set verbosity level", cxxopts::value<int>(logLevel)->default_value("255"))
+			("t,timeout", "Timeout in seconds", cxxopts::value<int>(timeout)->default_value("10"))
+			("o,output", "Output file prefix", cxxopts::value<std::string>(output)->default_value(""))
+			("M", "Use multicast RTP transport", cxxopts::value<bool>()->default_value("false"))
+			("T", "Use TCP RTP transport", cxxopts::value<bool>()->default_value("false"))
+			("H", "Use HTTP RTP transport", cxxopts::value<bool>()->default_value("false"))
+			("url", "Input URL", cxxopts::value<std::vector<std::string>>());
+
+		options.parse_positional({"url"});
+		auto result = options.parse(argc, argv);
+
+		if (result.count("help")) {
+			usage(argv[0]);
+			std::cout << options.help() << std::endl;
+			return 0;
 		}
-	}
-	opts["timeout"] = std::to_string(timeout);
-	opts["rtptransport"] = rtptransport;
-	
-	if (optind<argc)
-	{
+
+		// RTP transport selection (priority: M > T > H if multiple provided)
+		if (result.count("M") && result["M"].as<bool>()) {
+			rtptransport = "multicast";
+		} else if (result.count("T") && result["T"].as<bool>()) {
+			rtptransport = "tcp";
+		} else if (result.count("H") && result["H"].as<bool>()) {
+			rtptransport = "http";
+		}
+
+		// Ensure we have exactly one positional URL
+		if (!result.count("url") || result["url"].as<std::vector<std::string>>().empty()) {
+			usage(argv[0]);
+			std::cout << options.help() << std::endl;
+			return 0;
+		}
+
+		// Replace argv/optind usage with parsed URL
+		std::string url = result["url"].as<std::vector<std::string>>().front();
+
+		opts["timeout"] = std::to_string(timeout);
+		opts["rtptransport"] = rtptransport;
+
 		Environment env(stop);
-		std::string url = argv[optind];
 		if ( (url.find("rtsp://") == 0) || (url.find("rtsps://") == 0) ) {
 			RTSPCallback cb(output);
 			RTSPConnection rtspClient(env, &cb, url.c_str(), opts, logLevel);
 			rtspClient.start();
-			
+            
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;
-			env.mainloop();	
-			
+			env.mainloop(); 
+            
 		} else if (url.find("file://") == 0) {
 			MKVCallback cb(output);
 			MKVClient mkvClient(env, &cb, url.c_str(), std::map<std::string,std::string>());
-			
+            
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;
-			env.mainloop();	
-			
+			env.mainloop(); 
+            
 		} else {
 			std::string sdp;
 			if (url.find("rtp://") == 0) {
 				sdp.assign(SDPClient::getSdpFromRtpUrl(url));
-			} else {		
+			} else {     
 				std::ifstream is(url);
 				sdp.assign((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
 			}
 			std::cout << "SDP:\n" << sdp << std::endl;
-			SDPCallback cb(output);			
+			SDPCallback cb(output);         
 			SDPClient rtpClient(env, &cb, sdp.c_str(), std::map<std::string,std::string>());
-			
+            
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;
-			env.mainloop();				
+			env.mainloop();             
 		}
-	} 		
-	else
-	{
+		return 0;
+	} catch (const std::exception& e) {
+		std::cerr << "Argument parsing error: " << e.what() << std::endl;
 		usage(argv[0]);
+		return 1;
 	}
 	return 0;
 }

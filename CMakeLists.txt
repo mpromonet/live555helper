@@ -49,6 +49,8 @@ endif()
 add_executable (${PROJECT_NAME} main.cpp)
 target_link_libraries (${PROJECT_NAME} liblive555helper) 
 
+target_include_directories(${PROJECT_NAME} PRIVATE cxxopts/include)
+
 SET(CPACK_GENERATOR "TGZ")
 SET(CPACK_PACKAGE_CONTACT "michel.promonet@free.fr")
 INCLUDE(CPack)
