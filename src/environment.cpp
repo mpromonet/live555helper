@@ -10,13 +10,9 @@
 #include <iostream>
 #include "environment.h"
 
-Environment::Environment() : Environment(m_stopRef)
-{
-}
 
-Environment::Environment(char & stop) : BasicUsageEnvironment(*BasicTaskScheduler::createNew()), m_stop(stop)
+Environment::Environment() : BasicUsageEnvironment(*BasicTaskScheduler::createNew()), m_stop(0)
 {
-	m_stop = 0;
 }
 
 Environment::~Environment()
@@ -32,5 +28,5 @@ void Environment::mainloop()
 
 void Environment::stop()
 {
-	m_stop = 1;	
+	this->taskScheduler().scheduleDelayedTask(0, [](void* env) { static_cast<Environment*>(env)->m_stop = 1; }, this);
 }

@@ -132,12 +132,14 @@ class MKVCallback : public MKVClient::Callback
 		}
 };
 
-char stop = 0;
+Environment *env = nullptr;
 void sig_handler(int signo)
 {
 	if (signo == SIGINT) {
 		printf("received SIGINT\n");
-		stop = 1;
+		if (env) {
+			env->stop();
+		}
 	}
 }
 
@@ -168,6 +170,8 @@ int main(int argc, char *argv[])
 	int  logLevel = 255;
 	std::string output;
 	std::map<std::string,std::string> opts;
+
+	env = new Environment();
 
 	// decode args with cxxopts
 	try {
@@ -214,23 +218,23 @@ int main(int argc, char *argv[])
 		opts["timeout"] = std::to_string(timeout);
 		opts["rtptransport"] = rtptransport;
 
-		Environment env(stop);
+		
 		if ( (url.find("rtsp://") == 0) || (url.find("rtsps://") == 0) ) {
 			RTSPCallback cb(output);
-			RTSPConnection rtspClient(env, &cb, url.c_str(), opts, logLevel);
+			RTSPConnection rtspClient(*env, &cb, url.c_str(), opts, logLevel);
 			rtspClient.start();
             
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;
-			env.mainloop(); 
+			env->mainloop(); 
             
 		} else if (url.find("file://") == 0) {
 			MKVCallback cb(output);
-			MKVClient mkvClient(env, &cb, url.c_str(), std::map<std::string,std::string>());
+			MKVClient mkvClient(*env, &cb, url.c_str(), std::map<std::string,std::string>());
             
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;
-			env.mainloop(); 
+			env->mainloop(); 
             
 		} else {
 			std::string sdp;
@@ -242,11 +246,11 @@ int main(int argc, char *argv[])
 			}
 			std::cout << "SDP:\n" << sdp << std::endl;
 			SDPCallback cb(output);         
-			SDPClient rtpClient(env, &cb, sdp.c_str(), std::map<std::string,std::string>());
+			SDPClient rtpClient(*env, &cb, sdp.c_str(), std::map<std::string,std::string>());
             
 			signal(SIGINT, sig_handler);
 			std::cout << "Start mainloop" << std::endl;
-			env.mainloop();             
+			env->mainloop();             
 		}
 		return 0;
 	} catch (const std::exception& e) {
@@ -254,5 +258,6 @@ int main(int argc, char *argv[])
 		usage(argv[0]);
 		return 1;
 	}
+	delete env;
 	return 0;
 }

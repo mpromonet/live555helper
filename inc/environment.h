@@ -20,7 +20,6 @@ class Environment : public BasicUsageEnvironment
 {
 	public:
 		Environment();
-		Environment(char& stop);
 		virtual ~Environment();
 	
 	
@@ -28,7 +27,6 @@ class Environment : public BasicUsageEnvironment
 		void stop();	
 		
 	protected:
-		char& m_stop;		
-		char  m_stopRef;		
+		char  m_stop;
 };
 
