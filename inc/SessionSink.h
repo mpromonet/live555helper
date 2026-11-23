@@ -9,7 +9,10 @@
 
 #pragma once
 
+#include <chrono>
+#include <deque>
 #include <stdint.h>
+#include <vector>
 
 #include "environment.h"
 #include "liveMedia.hh"
@@ -45,13 +48,40 @@ class SessionCallback
 class SessionSink: public MediaSink 
 {
 	public:
-		static SessionSink* createNew(UsageEnvironment& env, SessionCallback* callback, size_t bufferSize = 2*1024*1024) { return new SessionSink(env, callback, bufferSize); }
+		class PlaybackClock {
+			public:
+				int64_t delay(struct timeval presentationTime, unsigned durationInMicroseconds);
+				int64_t remaining() const;
+
+			private:
+				bool m_started = false;
+				int64_t m_firstPresentationTime = 0;
+				std::chrono::steady_clock::time_point m_start;
+				std::chrono::steady_clock::time_point m_end;
+		};
+
+		static SessionSink* createNew(UsageEnvironment& env, SessionCallback* callback, size_t bufferSize = 2*1024*1024, PlaybackClock* clock = nullptr) { return new SessionSink(env, callback, bufferSize, clock); }
 
 	private:
-		SessionSink(UsageEnvironment& env, SessionCallback* callback, size_t bufferSize);
+		SessionSink(UsageEnvironment& env, SessionCallback* callback, size_t bufferSize, PlaybackClock* clock);
 		virtual ~SessionSink();
 
 		void allocate(ssize_t bufferSize);
+		void deliverFrame();
+		void scheduleFrame();
+		void readIfReady();
+		static void deliverFrame(void* clientData) {
+			static_cast<SessionSink*>(clientData)->deliverFrame();
+		}
+		static void onInputClosure(void* clientData) {
+			SessionSink* sink = static_cast<SessionSink*>(clientData);
+			sink->m_readPending = false;
+			if (!sink->m_frames.empty()) {
+				sink->m_inputClosed = true;
+			} else {
+				sink->onSourceClosure();
+			}
+		}
 
 		static void afterGettingFrame(void* clientData, unsigned frameSize,
 					unsigned numTruncatedBytes,
@@ -70,5 +100,15 @@ class SessionSink: public MediaSink
 		size_t                 m_bufferSize;
 		SessionCallback*       m_callback; 	
 		ssize_t                m_markerSize;
+		PlaybackClock*         m_clock;
+		struct PendingFrame {
+			std::vector<u_int8_t> data;
+			struct timeval presentationTime;
+			unsigned duration;
+		};
+		std::deque<PendingFrame> m_frames;
+		size_t                 m_queuedBytes = 0;
+		bool                   m_readPending = false;
+		bool                   m_inputClosed = false;
 };
 	

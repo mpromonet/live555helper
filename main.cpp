@@ -130,6 +130,10 @@ class MKVCallback : public MKVClient::Callback
 			}
 			return true;
 		}
+
+		virtual void    onEndOfFile(MKVClient& client) {
+			client.stop();
+		}
 };
 
 Environment *env = nullptr;

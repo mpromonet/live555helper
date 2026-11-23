@@ -11,11 +11,13 @@
 
 #pragma once
 
+#include <atomic>
 #include "environment.h"
 #include "SessionSink.h"
 #include "liveMedia.hh"
 #include <string>
 #include <map>
+#include <vector>
 
 
 /* ---------------------------------------------------------------------------
@@ -33,7 +35,7 @@ class MKVClient
 				virtual void    onError(MKVClient&, const char*)  {}
 				virtual void    onConnectionTimeout(MKVClient&)   {}
 				virtual void    onDataTimeout(MKVClient&)         {}				
-				virtual void    onEndOfFile(MKVClient& client)  { client.stop(); }
+				virtual void    onEndOfFile(MKVClient&)  {}
 		};
 			
 	public:
@@ -41,9 +43,7 @@ class MKVClient
 		virtual ~MKVClient();
 
 		void start() {};
-		void stop() {
-			m_env.stop();
-		}
+		void stop();
 	
 	private:
 		void onMatroskaFileCreation(MatroskaFile* newFile);
@@ -54,11 +54,25 @@ class MKVClient
 		static void onEndOfFile(void* clientData) {
 			((MKVClient*)(clientData))->onEndOfFile();
 		}
+		void restart();
+		static void restart(void* clientData) {
+			((MKVClient*)(clientData))->restart();
+		}
+		static void onDemuxDeletion(void* clientData, MatroskaDemux*) {
+			static_cast<MKVClient*>(clientData)->m_demux = nullptr;
+		}
+		void closeFile();
 		
 	protected:
 		Environment&             m_env;
 		std::string              m_url;
 		Callback*                m_callback; 	
-		MatroskaFile*            m_mkvfile; 
-		MatroskaDemux*	         m_demux;
+		MatroskaFile*            m_mkvfile = nullptr;
+		MatroskaDemux*	         m_demux = nullptr;
+		std::vector<MediaSink*>  m_sinks;
+		std::vector<FramedSource*> m_tracks;
+		SessionSink::PlaybackClock m_playbackClock;
+		unsigned                 m_pendingEOF = 0;
+		std::atomic<bool>        m_stopped = false;
+		TaskToken                m_restartTask = nullptr;
 };
