@@ -23,7 +23,7 @@ int64_t SessionSink::PlaybackClock::delay(struct timeval presentationTime, unsig
 		m_end = now;
 	}
 	const auto target = m_start + std::chrono::microseconds(timestamp - m_firstPresentationTime);
-	m_end = std::max(m_end, target + std::chrono::microseconds(durationInMicroseconds));
+	m_end = (std::max)(m_end, target + std::chrono::microseconds(durationInMicroseconds));
 	return std::max<int64_t>(0, std::chrono::duration_cast<std::chrono::microseconds>(target - now).count());
 }
 
